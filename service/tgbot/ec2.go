@@ -1,10 +1,10 @@
 package tgbot
 
 import (
+	"github.com/338317/Aws-Manger-Bot/aws"
 	tb "gopkg.in/tucnak/telebot.v2"
 	"io/ioutil"
 	"log"
-	"main/aws"
 	"os"
 	"time"
 )

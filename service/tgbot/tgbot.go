@@ -1,8 +1,8 @@
 package tgbot
 
 import (
+	"github.com/338317/Aws-Manger-Bot/conf"
 	tb "gopkg.in/tucnak/telebot.v2"
-	"main/conf"
 	"time"
 )
 

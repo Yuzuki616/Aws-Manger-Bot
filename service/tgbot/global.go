@@ -1,10 +1,10 @@
 package tgbot
 
 import (
+	"github.com/338317/Aws-Manger-Bot/aws"
+	"github.com/338317/Aws-Manger-Bot/conf"
 	tb "gopkg.in/tucnak/telebot.v2"
 	"log"
-	"main/aws"
-	"main/conf"
 )
 
 func (p *TgBot) GlobalMess(bot *tb.Bot) {
