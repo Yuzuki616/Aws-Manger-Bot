@@ -77,7 +77,7 @@ func (p *TgBot) create(bot *tb.Bot, c *tb.Callback) {
 						log.Println("Send message error: ", err)
 					}
 					_, sendErr := bot.SendAlbum(c.Sender,
-						tb.Album{&tb.Document{File: tb.FromDisk("./tmp.pem"), FileName: *creRt.Name + ".pem"}})
+						tb.Album{&tb.Document{File: tb.FromDisk("./tmp.pem"), FileName: *creRt.Name + "_key.pem"}})
 					if sendErr != nil {
 						log.Println("Send file error: ", sendErr)
 					}
