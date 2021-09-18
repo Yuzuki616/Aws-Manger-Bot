@@ -9,6 +9,7 @@ import (
 type TgBot struct {
 	Config    *conf.Conf
 	TypeKey   *tb.ReplyMarkup
+	AmiKey    *tb.ReplyMarkup
 	State     map[int]*State
 	RegionKey *tb.ReplyMarkup
 }

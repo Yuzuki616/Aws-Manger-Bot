@@ -141,6 +141,7 @@ func (p *TgBot) list(bot *tb.Bot, c *tb.Callback) {
 func (p *TgBot) Ec2Manger(bot *tb.Bot) {
 	amiKey := &tb.ReplyMarkup{}
 	debian := amiKey.Data("Debian10", debian10)
+	p.AmiKey = amiKey
 	bot.Handle(&debian, func(c *tb.Callback) {
 		p.State[c.Sender.ID].Data["ami"] = debian10
 		defer delete(p.State, c.Sender.ID)
@@ -159,6 +160,13 @@ func (p *TgBot) Ec2Manger(bot *tb.Bot) {
 		p.create(bot, c)
 	})
 	otherAmi := amiKey.Data("其他系统", "other")
+	bot.Handle(&otherAmi, func(c *tb.Callback) {
+		_, editErr := bot.Edit(c.Message, "请输入Ami ID: ")
+		if editErr != nil {
+			log.Println(editErr)
+		}
+		p.State[c.Sender.ID].Parent = 8
+	})
 	amiKey.Inline(amiKey.Row(debian, ubuntu, centos), amiKey.Row(otherAmi))
 	typeKey := &tb.ReplyMarkup{}
 	p.TypeKey = typeKey
@@ -178,8 +186,15 @@ func (p *TgBot) Ec2Manger(bot *tb.Bot) {
 			log.Println("Edit message error: ", err)
 		}
 	})
-	otherKey := typeKey.Data("其他类型", "otherKey")
-	typeKey.Inline(typeKey.Row(t2, t3), typeKey.Row(otherKey))
+	otherType := typeKey.Data("其他类型", "otherType")
+	bot.Handle(&otherType, func(c *tb.Callback) {
+		_, editErr := bot.Edit(c.Message, "请输入ec2类型: ")
+		if editErr != nil {
+			log.Println(editErr)
+		}
+		p.State[c.Sender.ID].Parent = 9
+	})
+	typeKey.Inline(typeKey.Row(t2, t3), typeKey.Row(otherType))
 	key := &tb.ReplyMarkup{}
 	newEc2 := key.Data("创建EC2", "createEc2")
 	bot.Handle(&newEc2, func(c *tb.Callback) {

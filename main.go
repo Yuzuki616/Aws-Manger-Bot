@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
+	"github.com/338317/Aws-Manger-Bot/conf"
+	"github.com/338317/Aws-Manger-Bot/service/tgbot"
 	"log"
-	"main/conf"
-	"main/service/tgbot"
 )
 import "flag"
 

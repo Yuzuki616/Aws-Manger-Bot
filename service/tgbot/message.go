@@ -160,6 +160,16 @@ func (p *TgBot) GlobalMess(bot *tb.Bot) {
 				if sendErr != nil {
 					log.Println("Send message error: ", sendErr)
 				}
+			case 8:
+				p.State[m.Sender.ID].Data["ami"] = m.Text
+				defer delete(p.State, m.Sender.ID)
+				p.create(bot, &tb.Callback{Sender: m.Sender, Message: m})
+			case 9:
+				p.State[m.Sender.ID].Data["type"] = m.Text
+				_, err := bot.Send(m.Sender, "请选择操作系统", p.AmiKey)
+				if err != nil {
+					log.Println("Send message error: ", err)
+				}
 			default:
 				return
 			}
