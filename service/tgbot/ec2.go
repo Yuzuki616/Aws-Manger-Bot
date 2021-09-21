@@ -15,11 +15,13 @@ const (
 	centos8    = "ami-000eaef4896b0e4dc"
 )
 
-func keySave(key string) {
-	err := ioutil.WriteFile("./tmp.pem", []byte(key), 0644)
+func keySave(key string) string {
+	tmepName := time.Unix(time.Now().Unix(), 0).Format("./_2006-01-02_15:04:05.tmp")
+	err := ioutil.WriteFile(tmepName, []byte(key), 0644)
 	if err != nil {
 		log.Println("Save key file error:", err)
 	}
+	return tmepName
 }
 
 func (p *TgBot) create(bot *tb.Bot, c *tb.Callback) {
@@ -69,7 +71,7 @@ func (p *TgBot) create(bot *tb.Bot, c *tb.Callback) {
 					return
 				}
 				if *getRt.Status == "running" {
-					keySave(*creRt.Key)
+					fileName := keySave(*creRt.Key)
 					_, err := bot.Send(c.Sender, "创建成功！\n实例信息: \n备注: "+*getRt.Name+
 						"\n实例ID: "+*getRt.InstanceId+
 						"\nIP: "+*getRt.Ip+"\nSSH密钥: ")
@@ -77,11 +79,11 @@ func (p *TgBot) create(bot *tb.Bot, c *tb.Callback) {
 						log.Println("Send message error: ", err)
 					}
 					_, sendErr := bot.SendAlbum(c.Sender,
-						tb.Album{&tb.Document{File: tb.FromDisk("./tmp.pem"), FileName: *creRt.Name + "_key.pem"}})
+						tb.Album{&tb.Document{File: tb.FromDisk(fileName), FileName: *creRt.Name + "_key.pem"}})
 					if sendErr != nil {
 						log.Println("Send file error: ", sendErr)
 					}
-					removeErr := os.Remove("./tmp.pem")
+					removeErr := os.Remove(fileName)
 					if removeErr != nil {
 						log.Println("Remove temp file error: ", removeErr)
 					}
