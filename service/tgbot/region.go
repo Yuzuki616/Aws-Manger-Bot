@@ -7,7 +7,7 @@ import (
 
 func (p *TgBot) regionHandle(bot *tb.Bot, c *tb.Callback) {
 	if p.State[c.Sender.ID].Parent == 101 {
-		p.list(bot, c)
+		p.listEc2(bot, c)
 		return
 	}
 	if p.State[c.Sender.ID].Parent == 102 {

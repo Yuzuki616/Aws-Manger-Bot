@@ -163,7 +163,7 @@ func (p *TgBot) GlobalMess(bot *tb.Bot) {
 			case 8:
 				p.State[m.Sender.ID].Data["ami"] = m.Text
 				defer delete(p.State, m.Sender.ID)
-				p.create(bot, &tb.Callback{Sender: m.Sender, Message: m})
+				p.createEc2(bot, &tb.Callback{Sender: m.Sender, Message: m})
 			case 9:
 				p.State[m.Sender.ID].Data["type"] = m.Text
 				_, err := bot.Send(m.Sender, "请选择操作系统", p.AmiKey)

@@ -24,16 +24,16 @@ func keySave(key string) string {
 	return tmepName
 }
 
-func (p *TgBot) create(bot *tb.Bot, c *tb.Callback) {
+func (p *TgBot) createEc2(bot *tb.Bot, c *tb.Callback) {
 	if _, ok := p.Config.UserInfo[c.Sender.ID]; ok {
 		_, err := bot.Edit(c.Message, "正在创建EC2...")
 		if err != nil {
 			log.Println("Edit message error: ", err)
 		}
 		if p.Config.UserInfo[c.Sender.ID].NowKey == "" {
-			for k := range p.Config.UserInfo[c.Sender.ID].AwsSecret {
-				p.Config.UserInfo[c.Sender.ID].NowKey = k
-				break
+			_, err := bot.Edit(c.Message, "请先通过/KeyManger命令选择密钥")
+			if err != nil {
+				log.Println("Edit message error: ", err)
 			}
 		} else {
 			awsO, newErr := aws.New(p.State[c.Sender.ID].Data["region"],
@@ -47,7 +47,9 @@ func (p *TgBot) create(bot *tb.Bot, c *tb.Callback) {
 				log.Println(newErr)
 				return
 			}
-			creRt, creErr := awsO.CreateEc2(p.State[c.Sender.ID].Data["ami"], p.State[c.Sender.ID].Data["type"], p.State[c.Sender.ID].Data["name"])
+			creRt, creErr := awsO.CreateEc2(p.State[c.Sender.ID].Data["ami"],
+				p.State[c.Sender.ID].Data["type"],
+				p.State[c.Sender.ID].Data["name"])
 			if creErr != nil {
 				_, err := bot.Send(c.Sender, "创建失败!")
 				if err != nil {
@@ -100,38 +102,45 @@ func (p *TgBot) create(bot *tb.Bot, c *tb.Callback) {
 	}
 }
 
-func (p *TgBot) list(bot *tb.Bot, c *tb.Callback) {
+func (p *TgBot) listEc2(bot *tb.Bot, c *tb.Callback) {
 	if _, ok := p.Config.UserInfo[c.Sender.ID]; ok {
-		delErr := bot.Delete(c.Message)
-		if delErr != nil {
-			log.Println("Delete message error: ", delErr)
-		}
-		aws0, newErr := aws.New(p.State[c.Sender.ID].Data["region"],
-			p.Config.UserInfo[c.Sender.ID].AwsSecret[p.Config.UserInfo[c.Sender.ID].NowKey].Id,
-			p.Config.UserInfo[c.Sender.ID].AwsSecret[p.Config.UserInfo[c.Sender.ID].NowKey].Secret)
-		if newErr != nil {
-			log.Println(newErr)
-		}
-		listRt, listErr := aws0.ListEc2()
-		if listErr != nil {
-			log.Println(listErr)
-		}
-		tmp := "已创建的Ec2实例: \n\n"
-		for _, ec2Info := range listRt {
-			if len(ec2Info.Instances[0].Tags) != 0 {
-				tmp += "\n备注: " + *ec2Info.Instances[0].Tags[0].Value
+		if p.Config.UserInfo[c.Sender.ID].NowKey == "" {
+			_, err := bot.Edit(c.Message, "请先通过/KeyManger命令选择密钥")
+			if err != nil {
+				log.Println("Edit message error: ", err)
 			}
-			tmp += "\n状态: " + *ec2Info.Instances[0].State.Name +
-				"\n实例ID: " + *ec2Info.Instances[0].InstanceId
-			if ec2Info.Instances[0].PublicIpAddress != nil {
-				tmp += "\nIP: " + *ec2Info.Instances[0].PublicIpAddress
+		} else {
+			delErr := bot.Delete(c.Message)
+			if delErr != nil {
+				log.Println("Delete message error: ", delErr)
 			}
+			aws0, newErr := aws.New(p.State[c.Sender.ID].Data["region"],
+				p.Config.UserInfo[c.Sender.ID].AwsSecret[p.Config.UserInfo[c.Sender.ID].NowKey].Id,
+				p.Config.UserInfo[c.Sender.ID].AwsSecret[p.Config.UserInfo[c.Sender.ID].NowKey].Secret)
+			if newErr != nil {
+				log.Println(newErr)
+			}
+			listRt, listErr := aws0.ListEc2()
+			if listErr != nil {
+				log.Println(listErr)
+			}
+			tmp := "已创建的Ec2实例: \n\n"
+			for _, ec2Info := range listRt {
+				if len(ec2Info.Instances[0].Tags) != 0 {
+					tmp += "\n备注: " + *ec2Info.Instances[0].Tags[0].Value
+				}
+				tmp += "\n状态: " + *ec2Info.Instances[0].State.Name +
+					"\n实例ID: " + *ec2Info.Instances[0].InstanceId
+				if ec2Info.Instances[0].PublicIpAddress != nil {
+					tmp += "\nIP: " + *ec2Info.Instances[0].PublicIpAddress
+				}
+			}
+			_, err := bot.Send(c.Sender, tmp)
+			if err != nil {
+				log.Println("Send message error: ", err)
+			}
+			delete(p.State, c.Sender.ID)
 		}
-		_, err := bot.Send(c.Sender, tmp)
-		if err != nil {
-			log.Println("Send message error: ", err)
-		}
-		delete(p.State, c.Sender.ID)
 	} else {
 		_, err := bot.Edit(c.Message, "请先通过/KeyManger命令添加密钥")
 		if err != nil {
@@ -147,19 +156,19 @@ func (p *TgBot) Ec2Manger(bot *tb.Bot) {
 	bot.Handle(&debian, func(c *tb.Callback) {
 		p.State[c.Sender.ID].Data["ami"] = debian10
 		defer delete(p.State, c.Sender.ID)
-		p.create(bot, c)
+		p.createEc2(bot, c)
 	})
 	ubuntu := amiKey.Data("Ubuntu20.04", ubuntu2004)
 	bot.Handle(&ubuntu, func(c *tb.Callback) {
 		p.State[c.Sender.ID].Data["ami"] = ubuntu2004
 		defer delete(p.State, c.Sender.ID)
-		p.create(bot, c)
+		p.createEc2(bot, c)
 	})
 	centos := amiKey.Data("Centos8", centos8)
 	bot.Handle(&centos, func(c *tb.Callback) {
 		p.State[c.Sender.ID].Data["ami"] = centos8
 		defer delete(p.State, c.Sender.ID)
-		p.create(bot, c)
+		p.createEc2(bot, c)
 	})
 	otherAmi := amiKey.Data("其他系统", "other")
 	bot.Handle(&otherAmi, func(c *tb.Callback) {

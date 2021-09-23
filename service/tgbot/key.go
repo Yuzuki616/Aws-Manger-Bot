@@ -10,8 +10,8 @@ func (p *TgBot) KeyManger(bot *tb.Bot) {
 	addKey := key.Data("添加密钥", "addKey")
 	listKey := key.Data("查看密钥", "listKey")
 	delKey := key.Data("删除密钥", "delKey")
-	swKey := key.Data("切换密钥", "swKey")
-	key.Inline(key.Row(addKey, delKey), key.Row(listKey, swKey))
+	setKey := key.Data("选择密钥", "setKey")
+	key.Inline(key.Row(addKey, delKey), key.Row(listKey, setKey))
 	bot.Handle("/KeyManger", func(m *tb.Message) {
 		if m.Private() {
 			_, err := bot.Send(m.Sender, "请选择你要进行的操作", key)
@@ -49,8 +49,8 @@ func (p *TgBot) KeyManger(bot *tb.Bot) {
 		}
 		p.State[c.Sender.ID] = &State{Parent: 3}
 	})
-	bot.Handle(&swKey, func(c *tb.Callback) {
-		_, err := bot.Edit(c.Message, "请输入要切换至的密钥备注：")
+	bot.Handle(&setKey, func(c *tb.Callback) {
+		_, err := bot.Edit(c.Message, "请输入要使用的密钥备注：")
 		if err != nil {
 			log.Println("Edit Message error: ", err)
 		}
