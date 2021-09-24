@@ -142,3 +142,22 @@ func (c *Aws) DeleteEc2(InstanceId string) error {
 	}
 	return nil
 }
+
+func (c *Aws) GetAmiId(AmiName string) (string, error) {
+	svc := ec2.New(c.Sess)
+	ami, err := svc.DescribeImages(&ec2.DescribeImagesInput{
+		Filters: []*ec2.Filter{
+			{
+				Name:   aws.String("name"),
+				Values: []*string{aws.String(AmiName)},
+			},
+			{
+				Name:   aws.String("architecture"),
+				Values: []*string{aws.String("x86_64")},
+			},
+		}})
+	if err != nil {
+		return "", err
+	}
+	return *ami.Images[0].ImageId, nil
+}

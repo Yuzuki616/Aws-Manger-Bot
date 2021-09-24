@@ -26,6 +26,20 @@ func (p *TgBot) regionHandle(bot *tb.Bot, c *tb.Callback) {
 		p.State[c.Sender.ID].Parent = 7
 		return
 	}
+	if p.State[c.Sender.ID].Parent == 104 {
+		_, err := bot.Edit(c.Message, "请输入ServiceCode和QuotaCode(用空格隔开): ")
+		if err != nil {
+			log.Println("Edit message error: ", err)
+		}
+		p.State[c.Sender.ID] = &State{Parent: 10}
+	}
+	if p.State[c.Sender.ID].Parent == 105 {
+		_, err := bot.Edit(c.Message, "请输入ServiceCode和QuotaCode和要提升至的数量(用空格隔开): ")
+		if err != nil {
+			log.Println("Edit message error: ", err)
+		}
+		p.State[c.Sender.ID] = &State{Parent: 11}
+	}
 	_, err := bot.Edit(c.Message, "请选择EC2类型", p.TypeKey)
 	if err != nil {
 		log.Println("Edit message error: ", err)

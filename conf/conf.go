@@ -1,11 +1,11 @@
 package conf
 
 import (
-	"fmt"
+	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
-	"log"
 	"os"
+	"sync"
 )
 
 type UserData struct {
@@ -21,7 +21,8 @@ type AwsSecret struct {
 }
 
 type Conf struct {
-	BotToken string
+	LogLv    string            `yaml:"log_lv"`
+	BotToken string            `yaml:"bot_token"`
 	UserInfo map[int]*UserData `yaml:"user_info"`
 }
 
@@ -29,20 +30,23 @@ func New() *Conf {
 	return &Conf{}
 }
 
+var Lock = sync.RWMutex{}
+
 func (c *Conf) LoadConfig() error {
 	r, readErr := ioutil.ReadFile("./config.yml")
 	if readErr != nil {
 		if os.IsNotExist(readErr) {
-			var token string
-			fmt.Println("Input telegram token: ")
-			_, scanErr := fmt.Scan(&token)
-			if scanErr != nil {
-				log.Fatalln("Get telegram bot token error: ", scanErr)
-			}
-			c.BotToken = token
+			log.Error("Config file not found")
+			log.Error("Write default config file")
+			c.LogLv = "info"
 			c.UserInfo = map[int]*UserData{0: {}}
 			writeErr := c.SaveConfig()
-			return writeErr
+			if writeErr != nil {
+				log.Error("Write file error: ", writeErr)
+				os.Exit(1)
+			}
+			log.Error("Done")
+			os.Exit(1)
 		}
 		return readErr
 	}

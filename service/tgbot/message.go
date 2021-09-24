@@ -3,8 +3,10 @@ package tgbot
 import (
 	"github.com/338317/Aws-Manger-Bot/aws"
 	"github.com/338317/Aws-Manger-Bot/conf"
+	log "github.com/sirupsen/logrus"
 	tb "gopkg.in/tucnak/telebot.v2"
-	"log"
+	"strconv"
+	"strings"
 )
 
 func (p *TgBot) GlobalMess(bot *tb.Bot) {
@@ -14,7 +16,7 @@ func (p *TgBot) GlobalMess(bot *tb.Bot) {
 			case 0:
 				_, err := bot.Send(m.Sender, "请输入密钥ID: ")
 				if err != nil {
-					log.Println("Send Message error: ", err)
+					log.Error("Send Message error: ", err)
 				}
 				p.State[m.Sender.ID].Data = make(map[string]string)
 				p.State[m.Sender.ID].Data["name"] = m.Text
@@ -22,7 +24,7 @@ func (p *TgBot) GlobalMess(bot *tb.Bot) {
 			case 1:
 				_, err := bot.Send(m.Sender, "请输入密钥: ")
 				if err != nil {
-					log.Println("Send Message error: ", err)
+					log.Error("Send Message error: ", err)
 				}
 				p.State[m.Sender.ID].Data["id"] = m.Text
 				p.State[m.Sender.ID].Parent++
@@ -36,7 +38,7 @@ func (p *TgBot) GlobalMess(bot *tb.Bot) {
 				} else if _, ok := p.Config.UserInfo[m.Sender.ID].AwsSecret[p.State[m.Sender.ID].Data["name"]]; ok {
 					_, err := bot.Send(m.Sender, "密钥已存在！！")
 					if err != nil {
-						log.Println("Send Message error: ", err)
+						log.Error("Send Message error: ", err)
 					}
 					return
 				}
@@ -44,46 +46,52 @@ func (p *TgBot) GlobalMess(bot *tb.Bot) {
 					Id:     p.State[m.Sender.ID].Data["id"],
 					Secret: m.Text,
 				}
+				conf.Lock.Lock()
 				saveErr := p.Config.SaveConfig()
+				conf.Lock.Unlock()
 				if saveErr != nil {
 					_, sendErr := bot.Send(m.Sender, "添加密钥失败！")
 					if sendErr != nil {
-						log.Println(sendErr)
+						log.Error(sendErr)
 					}
-					log.Println("Save config error: ", saveErr)
+					log.Error("Save config error: ", saveErr)
 					return
 				}
 				_, sendErr := bot.Send(m.Sender, "已添加密钥！")
 				if sendErr != nil {
-					log.Println("Send message error: ", sendErr)
+					log.Error("Send message error: ", sendErr)
 				}
 			case 3:
 				defer delete(p.State, m.Sender.ID)
 				if _, ok := p.Config.UserInfo[m.Sender.ID].AwsSecret[m.Text]; ok {
+					conf.Lock.Lock()
 					saveErr := p.Config.SaveConfig()
+					conf.Lock.Unlock()
 					if saveErr != nil {
 						_, sendErr := bot.Send(m.Sender, "删除失败！")
 						if sendErr != nil {
-							log.Println(sendErr)
+							log.Error(sendErr)
 						}
-						log.Println("Send message error: ", sendErr)
+						log.Error("Send message error: ", sendErr)
 						return
 					}
 					_, sendErr := bot.Send(m.Sender, "删除成功！")
 					if sendErr != nil {
-						log.Println("Send message error: ", sendErr)
+						log.Error("Send message error: ", sendErr)
 					}
 				} else {
 					_, err := bot.Send(m.Sender, "密钥不存在！")
 					if err != nil {
-						log.Println("Send message error: ", err)
+						log.Error("Send message error: ", err)
 					}
 				}
 			case 4:
 				defer delete(p.State, m.Sender.ID)
 				if _, ok := p.Config.UserInfo[m.Sender.ID].AwsSecret[m.Text]; ok {
 					p.Config.UserInfo[m.Sender.ID].NowKey = m.Text
+					conf.Lock.Lock()
 					saveErr := p.Config.SaveConfig()
+					conf.Lock.Unlock()
 					if saveErr != nil {
 						log.Println("Save config error: ", saveErr)
 						_, sendErr := bot.Send(m.Sender, "切换密钥失败！")
@@ -119,7 +127,7 @@ func (p *TgBot) GlobalMess(bot *tb.Bot) {
 				if newErr != nil {
 					_, sendErr := bot.Send(m.Sender, "删除失败！")
 					if sendErr != nil {
-						log.Println("Send message error: ", sendErr)
+						log.Error("Send message error: ", sendErr)
 					}
 					return
 				}
@@ -127,14 +135,14 @@ func (p *TgBot) GlobalMess(bot *tb.Bot) {
 				if delErr != nil {
 					_, sendErr := bot.Send(m.Sender, "删除失败！")
 					if sendErr != nil {
-						log.Println("Send message error: ", sendErr)
+						log.Error("Send message error: ", sendErr)
 					}
-					log.Println("delete instance error: ", delErr)
+					log.Error("delete instance error: ", delErr)
 					return
 				}
 				_, sendErr2 := bot.Send(m.Sender, "删除成功！")
 				if sendErr2 != nil {
-					log.Println("Send message error: ", sendErr2)
+					log.Error("Send message error: ", sendErr2)
 				}
 			case 7:
 				newRt, newErr := aws.New(p.State[m.Sender.ID].Data["region"],
@@ -143,22 +151,22 @@ func (p *TgBot) GlobalMess(bot *tb.Bot) {
 				if newErr != nil {
 					_, sendErr := bot.Send(m.Sender, "删除失败！")
 					if sendErr != nil {
-						log.Println("Send message error: ", sendErr)
+						log.Error("Send message error: ", sendErr)
 					}
 					return
 				}
 				ip, chErr := newRt.ChangeEc2Ip(m.Text)
 				if chErr != nil {
-					log.Println("Change ip error: ", chErr)
+					log.Error("Change ip error: ", chErr)
 					_, sendErr := bot.Send(m.Sender, "删除失败！")
 					if sendErr != nil {
-						log.Println("Send message error: ", sendErr)
+						log.Error("Send message error: ", sendErr)
 					}
 					return
 				}
 				_, sendErr := bot.Send(m.Sender, "更换ip成功，新的IP为: ", *ip)
 				if sendErr != nil {
-					log.Println("Send message error: ", sendErr)
+					log.Error("Send message error: ", sendErr)
 				}
 			case 8:
 				p.State[m.Sender.ID].Data["ami"] = m.Text
@@ -168,7 +176,55 @@ func (p *TgBot) GlobalMess(bot *tb.Bot) {
 				p.State[m.Sender.ID].Data["type"] = m.Text
 				_, err := bot.Send(m.Sender, "请选择操作系统", p.AmiKey)
 				if err != nil {
-					log.Println("Send message error: ", err)
+					log.Error("Send message error: ", err)
+				}
+			case 10:
+				code := strings.Split(m.Text, " ")
+				newRt, newErr := aws.New(p.State[m.Sender.ID].Data["region"],
+					p.Config.UserInfo[m.Sender.ID].AwsSecret[p.Config.UserInfo[m.Sender.ID].NowKey].Id,
+					p.Config.UserInfo[m.Sender.ID].AwsSecret[p.Config.UserInfo[m.Sender.ID].NowKey].Secret)
+				if newErr != nil {
+					log.Error(newErr)
+				}
+				quota, quotaErr := newRt.GetQuota(code[0], code[1])
+				if quotaErr != nil {
+					log.Error("Get Quota error: ", quotaErr)
+					return
+				}
+				_, sendErr := bot.Send(m.Sender, "配额"+*quota.QuotaName+"的值为"+
+					strconv.FormatFloat(*quota.Value, 'E', -1, 64))
+				if sendErr != nil {
+					log.Error("Send message error: ", sendErr)
+				}
+			case 11:
+				code := strings.Split(m.Text, " ")
+				newRt, newErr := aws.New(p.State[m.Sender.ID].Data["region"],
+					p.Config.UserInfo[m.Sender.ID].AwsSecret[p.Config.UserInfo[m.Sender.ID].NowKey].Id,
+					p.Config.UserInfo[m.Sender.ID].AwsSecret[p.Config.UserInfo[m.Sender.ID].NowKey].Secret)
+				if newErr != nil {
+					log.Error(newErr)
+				}
+				des, parErr := strconv.ParseFloat(code[2], 64)
+				if parErr != nil {
+					_, sendErr := bot.Send(m.Sender, "修改失败")
+					if sendErr != nil {
+						log.Error("Send message error: ", sendErr)
+					}
+					log.Error("String to Float64 error: ", parErr)
+					return
+				}
+				changeErr := newRt.ChangeQuota(code[0], code[1], des)
+				if changeErr != nil {
+					_, sendErr := bot.Send(m.Sender, "修改失败")
+					if sendErr != nil {
+						log.Error("Send message error: ", sendErr)
+					}
+					log.Error("Change quota error: ", changeErr)
+					return
+				}
+				_, sendErr := bot.Send(m.Sender, "修改成功")
+				if sendErr != nil {
+					log.Error("Send message error: ", sendErr)
 				}
 			default:
 				return

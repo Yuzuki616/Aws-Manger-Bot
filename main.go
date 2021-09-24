@@ -1,25 +1,44 @@
 package main
 
 import (
-	"fmt"
 	"github.com/338317/Aws-Manger-Bot/conf"
 	"github.com/338317/Aws-Manger-Bot/service/tgbot"
-	"log"
+	log "github.com/sirupsen/logrus"
+	easy "github.com/t-tomalak/logrus-easy-formatter"
+	"os"
 )
-import "flag"
 
 const (
 	version = "0.0.1"
-	name    = "Aws-Manger-Bot"
 )
 
+func printInfo() {
+	log.Info("Aws Manger Bot")
+	log.Info("Version: ", version)
+	log.Info("Github: https://github.com/338317/Aws-Manger-Bot")
+}
+
 func main() {
-	flag.Parse()
-	fmt.Printf("%s %s\n", name, version)
+	log.SetFormatter(&easy.Formatter{
+		TimestampFormat: "01-02 15:04:05",
+		LogFormat:       "Aws-Manger-Bot | %time% | %lvl% >> %msg% \n",
+	})
+	printInfo()
 	config := conf.New()
+	log.Info("Loading config...")
 	err := config.LoadConfig()
 	if err != nil {
-		log.Fatalln(err)
+		log.Error("Load config error: ", err)
+		os.Exit(1)
+	}
+	log.Info("Done")
+	switch config.LogLv {
+	case "info":
+		log.SetLevel(log.InfoLevel)
+	case "warn":
+		log.SetLevel(log.WarnLevel)
+	case "error":
+		log.SetLevel(log.ErrorLevel)
 	}
 	bot := tgbot.New(config)
 	bot.Start()
