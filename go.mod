@@ -1,6 +1,6 @@
 module github.com/338317/Aws-Manger-Bot
 
-go 1.16
+go 1.17
 
 require (
 	github.com/aws/aws-sdk-go v1.39.4
