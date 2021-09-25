@@ -1,8 +1,8 @@
 package tgbot
 
 import (
+	log "github.com/sirupsen/logrus"
 	tb "gopkg.in/tucnak/telebot.v2"
-	"log"
 )
 
 func (p *TgBot) regionHandle(bot *tb.Bot, c *tb.Callback) {
@@ -13,7 +13,7 @@ func (p *TgBot) regionHandle(bot *tb.Bot, c *tb.Callback) {
 	if p.State[c.Sender.ID].Parent == 102 {
 		_, err := bot.Edit(c.Message, "请输入要删除的实例ID: ")
 		if err != nil {
-			log.Println("Send message error: ", err)
+			log.Error("Send message error: ", err)
 		}
 		p.State[c.Sender.ID].Parent = 6
 		return
@@ -21,7 +21,7 @@ func (p *TgBot) regionHandle(bot *tb.Bot, c *tb.Callback) {
 	if p.State[c.Sender.ID].Parent == 103 {
 		_, err := bot.Edit(c.Message, "请输入要更换IP的实例ID: ")
 		if err != nil {
-			log.Println("Send message error: ", err)
+			log.Error("Send message error: ", err)
 		}
 		p.State[c.Sender.ID].Parent = 7
 		return
@@ -29,20 +29,22 @@ func (p *TgBot) regionHandle(bot *tb.Bot, c *tb.Callback) {
 	if p.State[c.Sender.ID].Parent == 104 {
 		_, err := bot.Edit(c.Message, "请输入ServiceCode和QuotaCode(用空格隔开): ")
 		if err != nil {
-			log.Println("Edit message error: ", err)
+			log.Error("Edit message error: ", err)
 		}
-		p.State[c.Sender.ID] = &State{Parent: 10}
+		p.State[c.Sender.ID].Parent = 10
+		return
 	}
 	if p.State[c.Sender.ID].Parent == 105 {
 		_, err := bot.Edit(c.Message, "请输入ServiceCode和QuotaCode和要提升至的数量(用空格隔开): ")
 		if err != nil {
-			log.Println("Edit message error: ", err)
+			log.Error("Edit message error: ", err)
 		}
-		p.State[c.Sender.ID] = &State{Parent: 11}
+		p.State[c.Sender.ID].Parent = 11
+		return
 	}
 	_, err := bot.Edit(c.Message, "请选择EC2类型", p.TypeKey)
 	if err != nil {
-		log.Println("Edit message error: ", err)
+		log.Error("Edit message error: ", err)
 	}
 }
 
