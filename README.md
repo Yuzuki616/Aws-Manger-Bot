@@ -9,7 +9,7 @@
 - [ ] Lightsail创建及管理
 - [ ] AGA创建与管理
 - [ ] EC2wl创建与管理
-- [ ] 配额相关操作
+- [x] 配额相关操作
 
 # 感谢
 - [tucnak/telebot](https://github.com/tucnak/telebot)
