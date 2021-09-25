@@ -10,9 +10,9 @@ import (
 )
 
 const (
-	debian10   = "Debian 10 Buster"
-	ubuntu2004 = "Ubuntu 20.04 LTS - Focal"
-	centos8    = "CentOS 8 (x86_64) - with Updates HVM"
+	debian10   = "debian-10-amd64-20210329-591"
+	ubuntu2004 = "ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-20210430"
+	redhat8    = "RHEL_HA-8.4.0_HVM-20210504-x86_64-2-Hourly2-GP2"
 )
 
 func keySave(key string) string {
@@ -54,6 +54,10 @@ func (p *TgBot) createEc2(bot *tb.Bot, c *tb.Callback) {
 					log.Warning("Send message error: ", err)
 				}
 				log.Error("Get ami ID error: ", amiErr)
+				return
+			}
+			if len(amiId) < 1 {
+				log.Error("Get ami ID error: Not found ami")
 				return
 			}
 			creRt, creErr := awsO.CreateEc2(amiId,
@@ -173,9 +177,9 @@ func (p *TgBot) Ec2Manger(bot *tb.Bot) {
 		defer delete(p.State, c.Sender.ID)
 		p.createEc2(bot, c)
 	})
-	centos := amiKey.Data("Centos8", "centos8")
-	bot.Handle(&centos, func(c *tb.Callback) {
-		p.State[c.Sender.ID].Data["ami"] = centos8
+	redhat := amiKey.Data("redhat", "redhat8")
+	bot.Handle(&redhat, func(c *tb.Callback) {
+		p.State[c.Sender.ID].Data["ami"] = redhat8
 		defer delete(p.State, c.Sender.ID)
 		p.createEc2(bot, c)
 	})
@@ -187,7 +191,7 @@ func (p *TgBot) Ec2Manger(bot *tb.Bot) {
 		}
 		p.State[c.Sender.ID].Parent = 8
 	})
-	amiKey.Inline(amiKey.Row(debian, ubuntu, centos), amiKey.Row(otherAmi))
+	amiKey.Inline(amiKey.Row(debian, ubuntu, redhat), amiKey.Row(otherAmi))
 	typeKey := &tb.ReplyMarkup{}
 	p.TypeKey = typeKey
 	t2 := typeKey.Data("t2.micro", "t2micro")
