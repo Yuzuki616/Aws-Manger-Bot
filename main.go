@@ -15,7 +15,7 @@ const (
 func printInfo() {
 	log.Info("Aws Manger Bot")
 	log.Info("Version: ", version)
-	log.Info("Github: https://github.com/338317/Aws-Manger-Bot")
+	log.Info("Github: https://github.com/yuzuki999/Aws-Manger-Bot")
 }
 
 func main() {
