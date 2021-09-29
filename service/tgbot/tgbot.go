@@ -36,7 +36,13 @@ func (p *TgBot) Start() {
 		os.Exit(1)
 	}
 	bot.Handle("/start", func(m *tb.Message) {
-		_, err := bot.Send(m.Sender, "欢迎使用Aws Manger Bot\n请使用/KeyManger指令添加并选择密钥，然后使用相应指令管理相应资源")
+		_, err := bot.Send(m.Sender,
+			`欢迎使用Aws Manger Bot
+请使用 /KeyManger 指令添加并选择密钥，然后使用相应指令管理相应资源
+指令列表:
+
+/Ec2Manger Ec2相关操作
+/QuotaManger 配额相关操作`)
 		if err != nil {
 			log.Warning("Send message error: ", err)
 		}
