@@ -47,18 +47,23 @@ func (p *TgBot) createEc2(bot *tb.Bot, c *tb.Callback) {
 				log.Error(newErr)
 				return
 			}
-			amiId, amiErr := awsO.GetAmiId(p.State[c.Sender.ID].Data["ami"])
-			if amiErr != nil {
-				_, err := bot.Send(c.Sender, "创建失败!")
-				if err != nil {
-					log.Warning("Send message error: ", err)
+			var amiId string
+			if _, ok := p.State[c.Sender.ID].Data["amiId"]; ok {
+				amiId = p.State[c.Sender.ID].Data["amiId"]
+			} else {
+				amiId, amiErr := awsO.GetAmiId(p.State[c.Sender.ID].Data["ami"])
+				if amiErr != nil {
+					_, err := bot.Send(c.Sender, "创建失败!")
+					if err != nil {
+						log.Warning("Send message error: ", err)
+					}
+					log.Error("Get ami ID error: ", amiErr)
+					return
 				}
-				log.Error("Get ami ID error: ", amiErr)
-				return
-			}
-			if len(amiId) < 1 {
-				log.Error("Get ami ID error: Not found ami")
-				return
+				if len(amiId) < 1 {
+					log.Error("Get ami ID error: Not found ami")
+					return
+				}
 			}
 			creRt, creErr := awsO.CreateEc2(amiId,
 				p.State[c.Sender.ID].Data["type"],
@@ -87,7 +92,7 @@ func (p *TgBot) createEc2(bot *tb.Bot, c *tb.Callback) {
 				}
 				if *getRt.Status == "running" {
 					fileName := keySave(*creRt.Key)
-					_, err := bot.Send(c.Sender, "创建成功！\n实例信息: \n备注: "+*getRt.Name+
+					_, err := bot.Send(c.Sender, "创建成功！\nUbuntu默认用户名ubuntu, Debian默认用户名admin\n\n实例信息: \n备注: "+*getRt.Name+
 						"\n实例ID: "+*getRt.InstanceId+
 						"\nIP: "+*getRt.Ip+"\nSSH密钥: ")
 					if err != nil {
@@ -177,7 +182,7 @@ func (p *TgBot) Ec2Manger(bot *tb.Bot) {
 		defer delete(p.State, c.Sender.ID)
 		p.createEc2(bot, c)
 	})
-	redhat := amiKey.Data("redhat", "redhat8")
+	redhat := amiKey.Data("Redhat8", "redhat8")
 	bot.Handle(&redhat, func(c *tb.Callback) {
 		p.State[c.Sender.ID].Data["ami"] = redhat8
 		defer delete(p.State, c.Sender.ID)

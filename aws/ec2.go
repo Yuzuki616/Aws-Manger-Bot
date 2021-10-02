@@ -14,8 +14,8 @@ type Ec2Info struct {
 	Key        *string
 }
 
-func (c *Aws) CreateEc2(Ami string, Ec2Type string, Name string) (*Ec2Info, error) {
-	svc := ec2.New(c.Sess)
+func (p *Aws) CreateEc2(Ami string, Ec2Type string, Name string) (*Ec2Info, error) {
+	svc := ec2.New(p.Sess)
 	dateName := Name + time.Unix(time.Now().Unix(), 0).Format("_2006-01-02_15:04:05")
 	keyRt, keyErr := svc.CreateKeyPair(&ec2.CreateKeyPairInput{KeyName: &dateName})
 	if keyErr != nil {
@@ -47,12 +47,13 @@ func (c *Aws) CreateEc2(Ami string, Ec2Type string, Name string) (*Ec2Info, erro
 		return nil, authSecInErr
 	}
 	runRt, runErr := svc.RunInstances(&ec2.RunInstancesInput{
-		ImageId:          aws.String(Ami),
-		InstanceType:     aws.String(Ec2Type),
-		MinCount:         aws.Int64(1),
-		MaxCount:         aws.Int64(1),
-		KeyName:          &dateName,
-		SecurityGroupIds: []*string{secRt.GroupId},
+		ImageId:             aws.String(Ami),
+		InstanceType:        aws.String(Ec2Type),
+		MinCount:            aws.Int64(1),
+		MaxCount:            aws.Int64(1),
+		KeyName:             &dateName,
+		SecurityGroupIds:    []*string{secRt.GroupId},
+		BlockDeviceMappings: []*ec2.BlockDeviceMapping{{DeviceName: aws.String("/dev/sda1"), Ebs: &ec2.EbsBlockDevice{VolumeSize: aws.Int64(250)}}},
 	}) //创建ec2实例
 	if runErr != nil {
 		return nil, runErr
@@ -77,8 +78,8 @@ func (c *Aws) CreateEc2(Ami string, Ec2Type string, Name string) (*Ec2Info, erro
 	}, nil
 }
 
-func (c *Aws) ChangeEc2Ip(InstanceId string) (*string, error) {
-	svc := ec2.New(c.Sess)
+func (p *Aws) ChangeEc2Ip(InstanceId string) (*string, error) {
+	svc := ec2.New(p.Sess)
 	desRt, desErr := svc.DescribeAddresses(&ec2.DescribeAddressesInput{
 		Filters: []*ec2.Filter{
 			{
@@ -110,8 +111,8 @@ func (c *Aws) ChangeEc2Ip(InstanceId string) (*string, error) {
 	return allRt.PublicIp, nil
 }
 
-func (c *Aws) GetEc2Info(InstanceId string) (*Ec2Info, error) {
-	svc := ec2.New(c.Sess)
+func (p *Aws) GetEc2Info(InstanceId string) (*Ec2Info, error) {
+	svc := ec2.New(p.Sess)
 	rt, err := svc.DescribeInstances(&ec2.DescribeInstancesInput{InstanceIds: []*string{aws.String(InstanceId)}})
 	if err != nil {
 		return nil, err
@@ -124,8 +125,8 @@ func (c *Aws) GetEc2Info(InstanceId string) (*Ec2Info, error) {
 	}, nil
 }
 
-func (c *Aws) ListEc2() ([]*ec2.Reservation, error) {
-	svc := ec2.New(c.Sess)
+func (p *Aws) ListEc2() ([]*ec2.Reservation, error) {
+	svc := ec2.New(p.Sess)
 	rt, err := svc.DescribeInstances(&ec2.DescribeInstancesInput{MaxResults: aws.Int64(100)})
 	if err != nil {
 		return nil, err
@@ -133,8 +134,8 @@ func (c *Aws) ListEc2() ([]*ec2.Reservation, error) {
 	return rt.Reservations, nil
 }
 
-func (c *Aws) StartEc2(InstanceId string) error {
-	svc := ec2.New(c.Sess)
+func (p *Aws) StartEc2(InstanceId string) error {
+	svc := ec2.New(p.Sess)
 	_, err := svc.StartInstances(&ec2.StartInstancesInput{InstanceIds: []*string{aws.String(InstanceId)}})
 	if err != nil {
 		return err
@@ -142,8 +143,8 @@ func (c *Aws) StartEc2(InstanceId string) error {
 	return nil
 }
 
-func (c *Aws) StopEc2(InstanceId string) error {
-	svc := ec2.New(c.Sess)
+func (p *Aws) StopEc2(InstanceId string) error {
+	svc := ec2.New(p.Sess)
 	_, err := svc.StopInstances(&ec2.StopInstancesInput{InstanceIds: []*string{aws.String(InstanceId)}})
 	if err != nil {
 		return err
@@ -151,8 +152,8 @@ func (c *Aws) StopEc2(InstanceId string) error {
 	return nil
 }
 
-func (c *Aws) RebootEc2(InstanceId string) error {
-	svc := ec2.New(c.Sess)
+func (p *Aws) RebootEc2(InstanceId string) error {
+	svc := ec2.New(p.Sess)
 	_, err := svc.RebootInstances(&ec2.RebootInstancesInput{InstanceIds: []*string{aws.String(InstanceId)}})
 	if err != nil {
 		return err
@@ -160,8 +161,8 @@ func (c *Aws) RebootEc2(InstanceId string) error {
 	return nil
 }
 
-func (c *Aws) DeleteEc2(InstanceId string) error {
-	svc := ec2.New(c.Sess)
+func (p *Aws) DeleteEc2(InstanceId string) error {
+	svc := ec2.New(p.Sess)
 	_, err := svc.TerminateInstances(&ec2.TerminateInstancesInput{InstanceIds: []*string{aws.String(InstanceId)}})
 	if err != nil {
 		return err
@@ -169,8 +170,8 @@ func (c *Aws) DeleteEc2(InstanceId string) error {
 	return nil
 }
 
-func (c *Aws) GetAmiId(AmiName string) (string, error) {
-	svc := ec2.New(c.Sess)
+func (p *Aws) GetAmiId(AmiName string) (string, error) {
+	svc := ec2.New(p.Sess)
 	ami, err := svc.DescribeImages(&ec2.DescribeImagesInput{
 		Filters: []*ec2.Filter{
 			{
@@ -186,4 +187,13 @@ func (c *Aws) GetAmiId(AmiName string) (string, error) {
 		return "", err
 	}
 	return *ami.Images[0].ImageId, nil
+}
+
+func (p *Aws) GetWindowsPassword(InstanceId string) (*ec2.GetPasswordDataOutput, error) {
+	svc := ec2.New(p.Sess)
+	rt, err := svc.GetPasswordData(&ec2.GetPasswordDataInput{InstanceId: aws.String(InstanceId)})
+	if err != nil {
+		return nil, err
+	}
+	return rt, nil
 }

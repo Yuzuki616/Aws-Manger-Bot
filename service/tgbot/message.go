@@ -170,7 +170,7 @@ func (p *TgBot) GlobalMess(bot *tb.Bot) {
 					log.Error("Send message error: ", sendErr)
 				}
 			case 8: //获取AMI
-				p.State[m.Sender.ID].Data["ami"] = m.Text
+				p.State[m.Sender.ID].Data["amiID"] = m.Text
 				defer delete(p.State, m.Sender.ID)
 				p.createEc2(bot, &tb.Callback{Sender: m.Sender, Message: m})
 			case 9: //选择操作系统
