@@ -10,9 +10,10 @@ import (
 )
 
 const (
-	debian10   = "debian-10-amd64-20210329-591"
-	ubuntu2004 = "ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-20210430"
-	redhat8    = "RHEL_HA-8.4.0_HVM-20210504-x86_64-2-Hourly2-GP2"
+	debian10    = "debian-10-amd64-20210329-591"
+	ubuntu2004  = "ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-20210430"
+	redhat8     = "RHEL_HA-8.4.0_HVM-20210504-x86_64-2-Hourly2-GP2"
+	windows2019 = "Windows_Server-2019-English-Full-Base-2021.09.15"
 )
 
 func keySave(key string) string {
@@ -188,6 +189,12 @@ func (p *TgBot) Ec2Manger(bot *tb.Bot) {
 		defer delete(p.State, c.Sender.ID)
 		p.createEc2(bot, c)
 	})
+	windows := amiKey.Data("Windows2019", "windows2019")
+	bot.Handle(&windows, func(c *tb.Callback) {
+		p.State[c.Sender.ID].Data["ami"] = windows2019
+		defer delete(p.State, c.Sender.ID)
+		p.createEc2(bot, c)
+	})
 	otherAmi := amiKey.Data("其他系统", "other")
 	bot.Handle(&otherAmi, func(c *tb.Callback) {
 		_, editErr := bot.Edit(c.Message, "请输入Ami ID: ")
@@ -196,7 +203,7 @@ func (p *TgBot) Ec2Manger(bot *tb.Bot) {
 		}
 		p.State[c.Sender.ID].Parent = 8
 	})
-	amiKey.Inline(amiKey.Row(debian, ubuntu, redhat), amiKey.Row(otherAmi))
+	amiKey.Inline(amiKey.Row(debian, ubuntu, redhat), amiKey.Row(windows), amiKey.Row(otherAmi))
 	typeKey := &tb.ReplyMarkup{}
 	p.TypeKey = typeKey
 	t2 := typeKey.Data("t2.micro", "t2micro")

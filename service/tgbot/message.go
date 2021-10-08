@@ -229,6 +229,26 @@ func (p *TgBot) GlobalMess(bot *tb.Bot) {
 				if sendErr != nil {
 					log.Error("Send message error: ", sendErr)
 				}
+			case 12:
+				defer delete(p.State, m.Sender.ID)
+				awsRt, awsErr := aws.New(p.State[m.Sender.ID].Data["region"],
+					p.Config.UserInfo[m.Sender.ID].AwsSecret[p.Config.UserInfo[m.Sender.ID].NowKey].Id,
+					p.Config.UserInfo[m.Sender.ID].AwsSecret[p.Config.UserInfo[m.Sender.ID].NowKey].Secret)
+				if awsErr != nil {
+					_, sendErr := bot.Send(m.Sender, "获取失败")
+					if sendErr != nil {
+						log.Error("Send message error: ", sendErr)
+					}
+					return
+				}
+				pass, passErr := awsRt.GetWindowsPassword(p.State[m.Sender.ID].Data[m.Text])
+				if passErr != nil {
+					log.Error("Get windows Password error: ", passErr)
+				}
+				_, sendErr := bot.Send(m.Sender, *pass.PasswordData+"\n\n\n以上为RSA加密后的密码，请自行使用ssh密钥解密")
+				if sendErr != nil {
+					log.Error("Send message error: ", sendErr)
+				}
 			default: //直接跳出
 				return
 			}
