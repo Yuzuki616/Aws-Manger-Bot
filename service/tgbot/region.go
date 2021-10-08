@@ -1,8 +1,10 @@
 package tgbot
 
 import (
+	"github.com/338317/Aws-Manger-Bot/aws"
 	log "github.com/sirupsen/logrus"
 	tb "gopkg.in/tucnak/telebot.v2"
+	"strconv"
 )
 
 func (p *TgBot) regionHandle(bot *tb.Bot, c *tb.Callback) {
@@ -41,6 +43,28 @@ func (p *TgBot) regionHandle(bot *tb.Bot, c *tb.Callback) {
 		}
 		p.State[c.Sender.ID].Parent = 11
 		return
+	}
+	if p.State[c.Sender.ID].Parent == 106 {
+		defer delete(p.State, c.Sender.ID)
+		newRt, newErr := aws.New(p.State[c.Sender.ID].Data["region"],
+			p.Config.UserInfo[c.Sender.ID].AwsSecret[p.Config.UserInfo[c.Sender.ID].NowKey].Id,
+			p.Config.UserInfo[c.Sender.ID].AwsSecret[p.Config.UserInfo[c.Sender.ID].NowKey].Secret)
+		if newErr != nil {
+			log.Error(newErr)
+		}
+		quota, quotaErr := newRt.GetQuota(serviceCodeAcd, quotaCodeAcd)
+		if quotaErr != nil {
+			log.Error("Get quota error: ", quotaErr)
+			_, editErr := bot.Edit(c.Message, "查看失败")
+			if editErr != nil {
+				log.Error("Edit message error: ", editErr)
+			}
+			return
+		}
+		_, editErr := bot.Edit(c.Message, "标准实例的配额为"+strconv.FormatFloat(*quota.Value, 'f', -1, 64))
+		if editErr != nil {
+			log.Error("Edit message error: ", editErr)
+		}
 	}
 	_, err := bot.Edit(c.Message, "请选择EC2类型", p.TypeKey)
 	if err != nil {

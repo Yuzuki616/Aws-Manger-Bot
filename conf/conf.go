@@ -45,7 +45,7 @@ func (c *Conf) LoadConfig() error {
 				log.Error("Write file error: ", writeErr)
 				os.Exit(1)
 			}
-			log.Error("Done")
+			log.Error("Exit")
 			os.Exit(1)
 		}
 		return readErr
