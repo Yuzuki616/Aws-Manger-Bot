@@ -44,7 +44,7 @@ func (p *TgBot) Start() {
 /Ec2Manger Ec2相关操作
 /QuotaManger 配额相关操作`)
 		if err != nil {
-			log.Warning("Send message error: ", err)
+			log.Error("Send message error: ", err)
 		}
 	})
 	p.KeyManger(bot)

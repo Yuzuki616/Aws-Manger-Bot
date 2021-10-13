@@ -46,6 +46,9 @@ func (p *TgBot) GlobalMess(bot *tb.Bot) {
 					Id:     p.State[m.Sender.ID].Data["id"],
 					Secret: m.Text,
 				}
+				if p.Config.UserInfo[m.Sender.ID].NowKey == "" {
+					p.Config.UserInfo[m.Sender.ID].NowKey = p.State[m.Sender.ID].Data["name"]
+				}
 				conf.Lock.Lock()
 				saveErr := p.Config.SaveConfig()
 				conf.Lock.Unlock()
@@ -85,7 +88,7 @@ func (p *TgBot) GlobalMess(bot *tb.Bot) {
 						log.Error("Send message error: ", err)
 					}
 				}
-			case 4: //选择密钥
+			case 4: //切换密钥
 				defer delete(p.State, m.Sender.ID)
 				if _, ok := p.Config.UserInfo[m.Sender.ID].AwsSecret[m.Text]; ok {
 					p.Config.UserInfo[m.Sender.ID].NowKey = m.Text
@@ -110,10 +113,9 @@ func (p *TgBot) GlobalMess(bot *tb.Bot) {
 						log.Println("Send message error: ", err)
 					}
 				}
-			case 5: //选择AWS地区
+			case 5: //获取ec2备注
 				p.State[m.Sender.ID].Data = make(map[string]string)
 				p.State[m.Sender.ID].Data["name"] = m.Text
-				p.State[m.Sender.ID].Parent++
 				_, err := bot.Send(m.Sender, "请选择地区: ", p.RegionKey)
 				if err != nil {
 					log.Println("Send message error: ", err)
@@ -129,6 +131,7 @@ func (p *TgBot) GlobalMess(bot *tb.Bot) {
 					if sendErr != nil {
 						log.Error("Send message error: ", sendErr)
 					}
+					log.Error("Init aws obj error: ", sendErr)
 					return
 				}
 				delErr := newRt.DeleteEc2(m.Text)
@@ -150,16 +153,17 @@ func (p *TgBot) GlobalMess(bot *tb.Bot) {
 					p.Config.UserInfo[m.Sender.ID].AwsSecret[p.Config.UserInfo[m.Sender.ID].NowKey].Id,
 					p.Config.UserInfo[m.Sender.ID].AwsSecret[p.Config.UserInfo[m.Sender.ID].NowKey].Secret)
 				if newErr != nil {
-					_, sendErr := bot.Send(m.Sender, "删除失败！")
+					_, sendErr := bot.Send(m.Sender, "更换失败！")
 					if sendErr != nil {
 						log.Error("Send message error: ", sendErr)
 					}
+					log.Error("Init aws obj error: ", sendErr)
 					return
 				}
 				ip, chErr := newRt.ChangeEc2Ip(m.Text)
 				if chErr != nil {
 					log.Error("Change ip error: ", chErr)
-					_, sendErr := bot.Send(m.Sender, "删除失败！")
+					_, sendErr := bot.Send(m.Sender, "更换失败！")
 					if sendErr != nil {
 						log.Error("Send message error: ", sendErr)
 					}
@@ -186,10 +190,19 @@ func (p *TgBot) GlobalMess(bot *tb.Bot) {
 					p.Config.UserInfo[m.Sender.ID].AwsSecret[p.Config.UserInfo[m.Sender.ID].NowKey].Id,
 					p.Config.UserInfo[m.Sender.ID].AwsSecret[p.Config.UserInfo[m.Sender.ID].NowKey].Secret)
 				if newErr != nil {
-					log.Error(newErr)
+					_, sendErr := bot.Send(m.Sender, "查看失败")
+					if sendErr != nil {
+						log.Error("Send message error: ", sendErr)
+					}
+					log.Error("Init aws obj error: ", newErr)
+					return
 				}
 				quota, quotaErr := newRt.GetQuota(code[0], code[1])
 				if quotaErr != nil {
+					_, sendErr := bot.Send(m.Sender, "查看失败")
+					if sendErr != nil {
+						log.Error("Send message error: ", sendErr)
+					}
 					log.Error("Get Quota error: ", quotaErr)
 					return
 				}
@@ -205,7 +218,12 @@ func (p *TgBot) GlobalMess(bot *tb.Bot) {
 					p.Config.UserInfo[m.Sender.ID].AwsSecret[p.Config.UserInfo[m.Sender.ID].NowKey].Id,
 					p.Config.UserInfo[m.Sender.ID].AwsSecret[p.Config.UserInfo[m.Sender.ID].NowKey].Secret)
 				if newErr != nil {
-					log.Error(newErr)
+					_, sendErr := bot.Send(m.Sender, "修改失败")
+					if sendErr != nil {
+						log.Error("Send message error: ", sendErr)
+					}
+					log.Error("Init aws obj error: ", newErr)
+					return
 				}
 				des, parErr := strconv.ParseFloat(code[2], 64)
 				if parErr != nil {
@@ -239,13 +257,92 @@ func (p *TgBot) GlobalMess(bot *tb.Bot) {
 					if sendErr != nil {
 						log.Error("Send message error: ", sendErr)
 					}
+					log.Error("Init aws oub error: ", awsErr)
 					return
 				}
-				pass, passErr := awsRt.GetWindowsPassword(p.State[m.Sender.ID].Data[m.Text])
+				pass, passErr := awsRt.GetWindowsPassword(m.Text)
 				if passErr != nil {
 					log.Error("Get windows Password error: ", passErr)
+					_, sendErr := bot.Send(m.Sender, "获取失败")
+					if sendErr != nil {
+						log.Error("Send message error: ", sendErr)
+					}
+					return
 				}
 				_, sendErr := bot.Send(m.Sender, *pass.PasswordData+"\n\n\n以上为RSA加密后的密码，请自行使用ssh密钥解密")
+				if sendErr != nil {
+					log.Error("Send message error: ", sendErr)
+				}
+			case 13: //获取Ec2 Wavelength备注
+				p.State[m.Sender.ID].Data["name"] = m.Text
+				p.State[m.Sender.ID].Data["type"] = "t3.medium"
+				_, err := bot.Send(m.Sender, "请选择Ami: ", p.AmiKey)
+				if err != nil {
+					log.Println("Send message error: ", err)
+				}
+				p.State[m.Sender.ID].Parent = 999
+			case 14: //暂停Ec2
+				defer delete(p.State, m.Sender.ID)
+				defer delete(p.State, m.Sender.ID)
+				awsRt, awsErr := aws.New(p.State[m.Sender.ID].Data["region"],
+					p.Config.UserInfo[m.Sender.ID].AwsSecret[p.Config.UserInfo[m.Sender.ID].NowKey].Id,
+					p.Config.UserInfo[m.Sender.ID].AwsSecret[p.Config.UserInfo[m.Sender.ID].NowKey].Secret)
+				if awsErr != nil {
+					_, sendErr := bot.Send(m.Sender, "暂停失败")
+					if sendErr != nil {
+						log.Error("Send message error: ", sendErr)
+					}
+					log.Error("Init aws oub error: ", awsErr)
+					return
+				}
+				stopErr := awsRt.StopEc2(m.Text)
+				if stopErr != nil {
+					_, sendErr := bot.Send(m.Sender, "暂停失败")
+					if sendErr != nil {
+						log.Error("Send message error: ", sendErr)
+					}
+					log.Error("Stop ec2 error: ", stopErr)
+					return
+				}
+			case 15: //获取aga备注
+				p.State[m.Sender.ID].Data = make(map[string]string)
+				p.State[m.Sender.ID].Data["agaName"] = m.Text
+				_, err := bot.Send(m.Sender, "请选择地区: ", p.RegionKey)
+				if err != nil {
+					log.Println("Send message error: ", err)
+				}
+				p.State[m.Sender.ID].Parent = 109
+			case 16: //创建Aga
+				defer delete(p.State, m.Sender.ID)
+				awsRt, awsErr := aws.New("us-west-2",
+					p.Config.UserInfo[m.Sender.ID].AwsSecret[p.Config.UserInfo[m.Sender.ID].NowKey].Id,
+					p.Config.UserInfo[m.Sender.ID].AwsSecret[p.Config.UserInfo[m.Sender.ID].NowKey].Secret)
+				if awsErr != nil {
+					_, sendErr := bot.Send(m.Sender, "创建失败")
+					if sendErr != nil {
+						log.Error("Send message error: ", sendErr)
+					}
+					log.Error("Init aws oub error: ", awsErr)
+					return
+				}
+				creRt, creErr := awsRt.CreateAga(p.State[m.Sender.ID].Data["agaName"],
+					p.State[m.Sender.ID].Data["region"],
+					m.Text)
+				if creErr != nil {
+					_, sendErr := bot.Send(m.Sender, "创建失败")
+					if sendErr != nil {
+						log.Error("Send message error: ", sendErr)
+					}
+					log.Error("Create aga error: ", creErr)
+				}
+				var ip string
+				for _, v := range creRt.Ip {
+					for _, v2 := range v.IpAddresses {
+						ip += *v2 + "\n"
+					}
+				}
+				_, sendErr := bot.Send(m.Sender, "创建成功! "+"\n\n备注: "+
+					*creRt.Name+"\nIP: \n"+ip+"\n状态: "+*creRt.Status+"\nArn: \n"+creRt.Arn)
 				if sendErr != nil {
 					log.Error("Send message error: ", sendErr)
 				}

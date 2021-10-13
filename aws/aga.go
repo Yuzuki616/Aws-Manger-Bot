@@ -9,12 +9,13 @@ import (
 type AgaInfo struct {
 	Name     *string
 	Status   *string
+	Arn      string
 	Ip       []*aga.IpSet
 	Protocol *string
 	Port     []*aga.PortOverride
 }
 
-func (p *Aws) CreateAga(Name string, Region string, InstanceId string, ListenerArn string, TargetPort int64, SourcePort int64) (*AgaInfo, error) {
+func (p *Aws) CreateAga(Name string, Region string, InstanceId string) (*AgaInfo, error) {
 	svc := aga.New(p.Sess)
 	IdempotencyToken := time.Unix(time.Now().Unix(), 0).Format("2006-01-02_15:04:05")
 	createAccRt, createAccErr := svc.CreateAccelerator(&aga.CreateAcceleratorInput{
@@ -41,17 +42,11 @@ func (p *Aws) CreateAga(Name string, Region string, InstanceId string, ListenerA
 	createEndRt, createEndErr := svc.CreateEndpointGroup(&aga.CreateEndpointGroupInput{
 		EndpointGroupRegion: aws.String(Region),
 		IdempotencyToken:    aws.String(IdempotencyToken),
-		ListenerArn:         aws.String(ListenerArn),
+		ListenerArn:         createLiRt.Listener.ListenerArn,
 		HealthCheckPort:     aws.Int64(22),
 		EndpointConfigurations: []*aga.EndpointConfiguration{
 			{
 				EndpointId: aws.String(InstanceId),
-			},
-		},
-		PortOverrides: []*aga.PortOverride{
-			{
-				EndpointPort: aws.Int64(TargetPort),
-				ListenerPort: aws.Int64(SourcePort),
 			},
 		},
 	})
@@ -59,8 +54,10 @@ func (p *Aws) CreateAga(Name string, Region string, InstanceId string, ListenerA
 		return nil, createEndErr
 	}
 	return &AgaInfo{
-		Name:     createAccRt.Accelerator.Name,
-		Status:   createAccRt.Accelerator.Status,
+		Name:   createAccRt.Accelerator.Name,
+		Status: createAccRt.Accelerator.Status,
+		Arn: *createAccRt.Accelerator.AcceleratorArn + "_" +
+			*createLiRt.Listener.ListenerArn + "_" + *createEndRt.EndpointGroup.EndpointGroupArn,
 		Ip:       createAccRt.Accelerator.IpSets,
 		Protocol: createLiRt.Listener.Protocol,
 		Port:     createEndRt.EndpointGroup.PortOverrides,
@@ -91,8 +88,10 @@ func (p *Aws) GetAgaInfo(AcceleratorArn string) (*AgaInfo, error) {
 		return nil, endErr
 	}
 	return &AgaInfo{
-		Name:     accRt.Accelerator.Name,
-		Status:   accRt.Accelerator.Status,
+		Name:   accRt.Accelerator.Name,
+		Status: accRt.Accelerator.Status,
+		Arn: AcceleratorArn + "_" +
+			*liRt.Listeners[0].ListenerArn + "_" + *endRt.EndpointGroups[0].EndpointGroupArn,
 		Ip:       accRt.Accelerator.IpSets,
 		Protocol: liRt.Listeners[0].Protocol,
 		Port:     endRt.EndpointGroups[0].PortOverrides,

@@ -65,18 +65,37 @@ func (p *TgBot) regionHandle(bot *tb.Bot, c *tb.Callback) {
 		if editErr != nil {
 			log.Error("Edit message error: ", editErr)
 		}
+		return
 	}
-	_, err := bot.Edit(c.Message, "请选择EC2类型", p.TypeKey)
-	if err != nil {
-		log.Error("Edit message error: ", err)
-	}
-	if p.State[c.Sender.ID].Parent == 106 {
+	if p.State[c.Sender.ID].Parent == 107 {
 		_, err := bot.Edit(c.Message, "请输入实例ID: ")
 		if err != nil {
 			log.Error("Edit message error: ", err)
 		}
 		p.State[c.Sender.ID].Parent = 12
+		return
 	}
+	if p.State[c.Sender.ID].Parent == 108 {
+		_, err := bot.Edit(c.Message, "请输入实例ID: ")
+		if err != nil {
+			log.Error("Edit message error: ", err)
+		}
+		p.State[c.Sender.ID].Parent = 14
+		return
+	}
+	if p.State[c.Sender.ID].Parent == 109 {
+		_, err := bot.Edit(c.Message, "请输入要关联的Ec2实例ID: ")
+		if err != nil {
+			log.Error("Edit message error: ", err)
+		}
+		p.State[c.Sender.ID].Parent = 16
+		return
+	}
+	_, err := bot.Edit(c.Message, "请选择EC2类型", p.TypeKey)
+	if err != nil {
+		log.Error("Edit message error: ", err)
+	}
+
 }
 
 func (p *TgBot) setRegionKey(bot *tb.Bot) {

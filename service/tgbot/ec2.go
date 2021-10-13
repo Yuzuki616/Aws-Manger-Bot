@@ -10,10 +10,16 @@ import (
 )
 
 const (
+	//Aws Ami
 	debian10    = "debian-10-amd64-20210329-591"
 	ubuntu2004  = "ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-20210430"
 	redhat8     = "RHEL_HA-8.4.0_HVM-20210504-x86_64-2-Hourly2-GP2"
 	windows2019 = "Windows_Server-2019-English-Full-Base-2021.09.15"
+	//Wavelength Zones
+	tokyoWl  = "ap-northeast-1-wl1-nrt-wlz-1"
+	seoulWl  = "ap-northeast-2-wl1-cjj-wlz-1"
+	londonWL = "eu-west-2-wl1-lon-wlz-1"
+	oregonWl = "us-west-2-wl1-phx-wlz-1"
 )
 
 func keySave(key string) string {
@@ -23,7 +29,7 @@ func keySave(key string) string {
 		log.Println("Save key file error:", err)
 	}
 	return tempName
-}
+} //缓存ssh密钥
 
 func (p *TgBot) createEc2(bot *tb.Bot, c *tb.Callback) {
 	if _, ok := p.Config.UserInfo[c.Sender.ID]; ok {
@@ -34,7 +40,7 @@ func (p *TgBot) createEc2(bot *tb.Bot, c *tb.Callback) {
 		if p.Config.UserInfo[c.Sender.ID].NowKey == "" {
 			_, err := bot.Edit(c.Message, "请先通过/KeyManger命令选择密钥")
 			if err != nil {
-				log.Warning("Edit message error: ", err)
+				log.Error("Edit message error: ", err)
 			}
 		} else {
 			awsO, newErr := aws.New(p.State[c.Sender.ID].Data["region"],
@@ -43,7 +49,7 @@ func (p *TgBot) createEc2(bot *tb.Bot, c *tb.Callback) {
 			if newErr != nil {
 				_, err := bot.Send(c.Sender, "创建失败!")
 				if err != nil {
-					log.Warning("Send message error: ", err)
+					log.Error("Send message error: ", err)
 				}
 				log.Error(newErr)
 				return
@@ -52,57 +58,101 @@ func (p *TgBot) createEc2(bot *tb.Bot, c *tb.Callback) {
 			if _, ok := p.State[c.Sender.ID].Data["amiId"]; ok {
 				amiId = p.State[c.Sender.ID].Data["amiId"]
 			} else {
-				amiId, amiErr := awsO.GetAmiId(p.State[c.Sender.ID].Data["ami"])
+				amiTmp, amiErr := awsO.GetAmiId(p.State[c.Sender.ID].Data["ami"])
 				if amiErr != nil {
 					_, err := bot.Send(c.Sender, "创建失败!")
 					if err != nil {
-						log.Warning("Send message error: ", err)
+						log.Error("Send message error: ", err)
 					}
 					log.Error("Get ami ID error: ", amiErr)
 					return
 				}
-				if len(amiId) < 1 {
+				if amiTmp == "" {
 					log.Error("Get ami ID error: Not found ami")
 					return
 				}
+				amiId = amiTmp
 			}
-			creRt, creErr := awsO.CreateEc2(amiId,
-				p.State[c.Sender.ID].Data["type"],
-				p.State[c.Sender.ID].Data["name"])
-			if creErr != nil {
-				_, err := bot.Send(c.Sender, "创建失败!")
-				if err != nil {
-					log.Warning("Send message error: ", err)
+			var InstanceInfo *aws.Ec2Info
+			if _, ok := p.State[c.Sender.ID].Data["zone"]; ok {
+				sub, caErr := awsO.GetSubnetInfo()
+				if caErr != nil {
+					_, err := bot.Send(c.Sender, "创建失败!")
+					if err != nil {
+						log.Error("Send message error: ", err)
+					}
+					log.Error("Get gateway info error: ", caErr)
+					return
 				}
-				log.Error(creErr)
-				return
+				var subId1 string
+				if len(sub.Subnets) == 0 {
+					subId, wlErr := awsO.CreateWl(p.State[c.Sender.ID].Data["zone"])
+					if wlErr != nil {
+						_, err := bot.Send(c.Sender, "创建失败!")
+						if err != nil {
+							log.Error("Send message error: ", err)
+						}
+						log.Error("Create wavelength error: ", wlErr)
+						return
+					}
+					subId1 = subId
+				} else {
+					subId1 = *sub.Subnets[0].SubnetId
+				}
+				creRt, creErr := awsO.CreateEc2Wl(subId1, amiId, p.State[c.Sender.ID].Data["name"])
+				if creErr != nil {
+					_, err := bot.Send(c.Sender, "创建失败!")
+					if err != nil {
+						log.Error("Send message error: ", err)
+					}
+					log.Error("Create ec2wl error: ", creErr)
+					return
+				}
+				InstanceInfo = creRt
+			} else {
+				creRt, creErr := awsO.CreateEc2(amiId,
+					p.State[c.Sender.ID].Data["type"],
+					p.State[c.Sender.ID].Data["name"])
+				if creErr != nil {
+					_, err := bot.Send(c.Sender, "创建失败!")
+					if err != nil {
+						log.Error("Send message error: ", err)
+					}
+					log.Error(creErr)
+					return
+				}
+				InstanceInfo = creRt
 			}
 			_, err := bot.Send(c.Sender, "已添加到创建队列，正在等待创建...")
 			if err != nil {
-				log.Warning("Send message error: ", err)
+				log.Error("Send message error: ", err)
 			}
 			for true {
-				getRt, getErr := awsO.GetEc2Info(*creRt.InstanceId)
+				getRt, getErr := awsO.GetEc2Info(*InstanceInfo.InstanceId)
 				if getErr != nil {
 					_, err := bot.Send(c.Sender, "获取实例信息失败！")
 					if err != nil {
-						log.Warning("Send message error: ", err)
+						log.Error("Send message error: ", err)
 					}
 					log.Error(getErr)
 					return
 				}
 				if *getRt.Status == "running" {
-					fileName := keySave(*creRt.Key)
+					fileName := keySave(*InstanceInfo.Key)
+					if getRt.Ip == nil {
+						getRt.Ip = InstanceInfo.Ip
+					}
+					log.Info(getRt.Ip)
 					_, err := bot.Send(c.Sender, "创建成功！\nUbuntu默认用户名ubuntu, Debian默认用户名admin\n\n实例信息: \n备注: "+*getRt.Name+
 						"\n实例ID: "+*getRt.InstanceId+
 						"\nIP: "+*getRt.Ip+"\nSSH密钥: ")
 					if err != nil {
-						log.Warning("Send message error: ", err)
+						log.Error("Send message error: ", err)
 					}
 					_, sendErr := bot.SendAlbum(c.Sender,
-						tb.Album{&tb.Document{File: tb.FromDisk(fileName), FileName: *creRt.Name + "_key.pem"}})
+						tb.Album{&tb.Document{File: tb.FromDisk(fileName), FileName: *InstanceInfo.Name + "_key.pem"}})
 					if sendErr != nil {
-						log.Warning("Send file error: ", sendErr)
+						log.Error("Send file error: ", sendErr)
 					}
 					removeErr := os.Remove(fileName)
 					if removeErr != nil {
@@ -116,10 +166,10 @@ func (p *TgBot) createEc2(bot *tb.Bot, c *tb.Callback) {
 	} else {
 		_, err := bot.Edit(c.Message, "请先通过/KeyManger命令添加密钥")
 		if err != nil {
-			log.Warning("Edit message error: ", err)
+			log.Error("Edit message error: ", err)
 		}
 	}
-}
+} //创建Ec2
 
 func (p *TgBot) listEc2(bot *tb.Bot, c *tb.Callback) {
 	if _, ok := p.Config.UserInfo[c.Sender.ID]; ok {
@@ -231,6 +281,60 @@ func (p *TgBot) Ec2Manger(bot *tb.Bot) {
 		p.State[c.Sender.ID].Parent = 9
 	})
 	typeKey.Inline(typeKey.Row(t2, t3), typeKey.Row(otherType))
+	regionWl := &tb.ReplyMarkup{}
+	tokyo := regionWl.Data("东京", "tokyo_wl")
+	bot.Handle(&tokyo, func(c *tb.Callback) {
+		_, err := bot.Edit(c.Message, "请输入备注:  ")
+		if err != nil {
+			log.Error("Edit message error: ", err)
+		}
+		p.State[c.Sender.ID] = &State{
+			Parent: 13,
+			Data: map[string]string{
+				"region": "ap-northeast-1",
+				"zone":   tokyoWl,
+			}}
+	})
+	seoul := regionWl.Data("首尔", "seoul_wl")
+	bot.Handle(&seoul, func(c *tb.Callback) {
+		_, err := bot.Edit(c.Message, "请选择类型: ", typeKey)
+		if err != nil {
+			log.Error("Edit message error: ", err)
+		}
+		p.State[c.Sender.ID] = &State{
+			Parent: 13,
+			Data: map[string]string{
+				"region": "ap-northeast-2",
+				"zone":   seoulWl,
+			}}
+	})
+	london := regionWl.Data("伦敦", "london_wl")
+	bot.Handle(&london, func(c *tb.Callback) {
+		_, err := bot.Edit(c.Message, "请选择类型: ", typeKey)
+		if err != nil {
+			log.Error("Edit message error: ", err)
+		}
+		p.State[c.Sender.ID] = &State{
+			Parent: 13,
+			Data: map[string]string{
+				"region": "eu-west-2",
+				"zone":   londonWL,
+			}}
+	})
+	oregon := regionWl.Data("俄勒冈", "oregon_wl")
+	bot.Handle(&oregon, func(c *tb.Callback) {
+		_, err := bot.Edit(c.Message, "请选择类型: ", typeKey)
+		if err != nil {
+			log.Error("Edit message error: ", err)
+		}
+		p.State[c.Sender.ID] = &State{
+			Parent: 13,
+			Data: map[string]string{
+				"region": "us-west-2",
+				"zone":   oregonWl,
+			}}
+	})
+	regionWl.Inline(regionWl.Row(tokyo, seoul), regionWl.Row(london, oregon))
 	key := &tb.ReplyMarkup{}
 	newEc2 := key.Data("创建EC2", "createEc2")
 	bot.Handle(&newEc2, func(c *tb.Callback) {
@@ -240,6 +344,13 @@ func (p *TgBot) Ec2Manger(bot *tb.Bot) {
 		}
 		p.State[c.Sender.ID] = &State{Parent: 5}
 	})
+	newEc2Wl := key.Data("创建Ec2Wl", "createEc2Wl")
+	bot.Handle(&newEc2Wl, func(c *tb.Callback) {
+		_, err := bot.Edit(c.Message, "请选择Wavelength地区: ", regionWl)
+		if err != nil {
+			log.Println("Edit message error: ", err)
+		}
+	})
 	listEc2 := key.Data("列出EC2", "listEc2")
 	bot.Handle(&listEc2, func(c *tb.Callback) {
 		_, err := bot.Edit(c.Message, "请选择AWS区域: ", p.RegionKey)
@@ -247,6 +358,14 @@ func (p *TgBot) Ec2Manger(bot *tb.Bot) {
 			log.Println("Edit message error: ", err)
 		}
 		p.State[c.Sender.ID] = &State{Parent: 101, Data: map[string]string{}}
+	})
+	stopEc2 := key.Data("暂停Ec2", "stopEc2")
+	bot.Handle(&stopEc2, func(c *tb.Callback) {
+		_, err := bot.Edit(c.Message, "请选择地区： ", p.RegionKey)
+		if err != nil {
+			log.Error("Edit message error: ", err)
+		}
+		p.State[c.Sender.ID] = &State{Parent: 108, Data: map[string]string{}}
 	})
 	delEc2 := key.Data("删除Ec2", "delEc2")
 	bot.Handle(&delEc2, func(c *tb.Callback) {
@@ -260,11 +379,19 @@ func (p *TgBot) Ec2Manger(bot *tb.Bot) {
 	bot.Handle(&chIp, func(c *tb.Callback) {
 		_, err := bot.Edit(c.Message, "请选择地区: ", p.RegionKey)
 		if err != nil {
-			log.Println("Edit message error: ", err)
+			log.Error("Edit message error: ", err)
 		}
 		p.State[c.Sender.ID] = &State{Parent: 103, Data: map[string]string{}}
 	})
-	key.Inline(key.Row(newEc2, listEc2), key.Row(delEc2, chIp))
+	getPassword := key.Data("提取Windows密码", "get_password")
+	bot.Handle(&getPassword, func(c *tb.Callback) {
+		_, editErr := bot.Edit(c.Message, "请选择地区: ", p.RegionKey)
+		if editErr != nil {
+			log.Error("Edit message error: ", editErr)
+		}
+		p.State[c.Sender.ID] = &State{Parent: 107, Data: map[string]string{}}
+	})
+	key.Inline(key.Row(newEc2, listEc2), key.Row(newEc2Wl), key.Row(getPassword), key.Row(delEc2, chIp))
 	bot.Handle("/Ec2Manger", func(m *tb.Message) {
 		if m.Private() {
 			_, err := bot.Send(m.Sender, "请选择你要进行的操作", key)

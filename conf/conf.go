@@ -40,6 +40,7 @@ func (c *Conf) LoadConfig() error {
 			log.Error("Write default config file")
 			c.LogLv = "info"
 			c.UserInfo = map[int]*UserData{0: {}}
+			c.BotToken = "Tg Bot Token"
 			writeErr := c.SaveConfig()
 			if writeErr != nil {
 				log.Error("Write file error: ", writeErr)

@@ -6,18 +6,31 @@ import (
 	"time"
 )
 
-func (p *Aws) CreateWl(Zone string, VpcId string) error {
+func (p *Aws) getVpcId() (string, error) {
 	svc := ec2.New(p.Sess)
-	_, subErr := svc.CreateSubnet(&ec2.CreateSubnetInput{
+	vpc, err := svc.DescribeVpcs(&ec2.DescribeVpcsInput{})
+	if err != nil {
+		return "", err
+	}
+	return *vpc.Vpcs[0].VpcId, nil
+}
+
+func (p *Aws) CreateWl(Zone string) (string, error) {
+	svc := ec2.New(p.Sess)
+	vpcId, vpcErr := p.getVpcId()
+	if vpcErr != nil {
+		return "", vpcErr
+	}
+	sub, subErr := svc.CreateSubnet(&ec2.CreateSubnetInput{
 		AvailabilityZone: aws.String(Zone),
-		CidrBlock:        aws.String("172.31.256.0/20"),
-		VpcId:            aws.String(VpcId),
+		CidrBlock:        aws.String("172.31.128.0/20"),
+		VpcId:            aws.String(vpcId),
 		TagSpecifications: []*ec2.TagSpecification{
 			{
 				ResourceType: aws.String("subnet"),
 				Tags: []*ec2.Tag{
 					{
-						Key:   aws.String("name"),
+						Key:   aws.String("Name"),
 						Value: aws.String("aws_manger_subnet"),
 					},
 				},
@@ -25,16 +38,16 @@ func (p *Aws) CreateWl(Zone string, VpcId string) error {
 		},
 	})
 	if subErr != nil {
-		return subErr
+		return "", subErr
 	}
 	ca, caErr := svc.CreateCarrierGateway(&ec2.CreateCarrierGatewayInput{
-		VpcId: aws.String(VpcId),
+		VpcId: aws.String(vpcId),
 		TagSpecifications: []*ec2.TagSpecification{
 			{
 				ResourceType: aws.String("carrier-gateway"),
 				Tags: []*ec2.Tag{
 					{
-						Key:   aws.String("name"),
+						Key:   aws.String("Name"),
 						Value: aws.String("aws_manger_gateway"),
 					},
 				},
@@ -42,16 +55,16 @@ func (p *Aws) CreateWl(Zone string, VpcId string) error {
 		},
 	})
 	if caErr != nil {
-		return caErr
+		return "", caErr
 	}
 	route, routeErr := svc.CreateRouteTable(&ec2.CreateRouteTableInput{
-		VpcId: aws.String(VpcId),
+		VpcId: aws.String(vpcId),
 		TagSpecifications: []*ec2.TagSpecification{
 			{
 				ResourceType: aws.String("route-table"),
 				Tags: []*ec2.Tag{
 					{
-						Key:   aws.String("name"),
+						Key:   aws.String("Name"),
 						Value: aws.String("aws_manger_route"),
 					},
 				},
@@ -59,31 +72,32 @@ func (p *Aws) CreateWl(Zone string, VpcId string) error {
 		},
 	})
 	if routeErr != nil {
-		return routeErr
+		return "", routeErr
 	}
 	_, assErr := svc.AssociateRouteTable(&ec2.AssociateRouteTableInput{
 		RouteTableId: route.RouteTable.RouteTableId,
 		GatewayId:    ca.CarrierGateway.CarrierGatewayId,
 	})
 	if assErr != nil {
-		return assErr
+		return "", assErr
 	}
-	return nil
+	return *sub.Subnet.SubnetId, nil
 }
 
-func (p Aws) GetGatewayInfo() (*ec2.DescribeCarrierGatewaysOutput, error) {
+func (p Aws) GetSubnetInfo() (*ec2.DescribeSubnetsOutput, error) {
 	svc := ec2.New(p.Sess)
-	ca, err := svc.DescribeCarrierGateways(&ec2.DescribeCarrierGatewaysInput{
+	sub, err := svc.DescribeSubnets(&ec2.DescribeSubnetsInput{
 		Filters: []*ec2.Filter{
 			{
-				Name:   aws.String("name"),
-				Values: []*string{aws.String("aws_manger_gateway")},
+				Name:   aws.String("tag:Name"),
+				Values: []*string{aws.String("kddi")},
 			},
-		}})
+		},
+	})
 	if err != nil {
 		return nil, err
 	}
-	return ca, nil
+	return sub, nil
 }
 
 func (p *Aws) CreateEc2Wl(SubId string, Ami string, Name string) (*Ec2Info, error) {
@@ -119,15 +133,16 @@ func (p *Aws) CreateEc2Wl(SubId string, Ami string, Name string) (*Ec2Info, erro
 		return nil, authSecInErr
 	}
 	runRt, runErr := svc.RunInstances(&ec2.RunInstancesInput{
-		ImageId:          aws.String(Ami),
-		InstanceType:     aws.String("t2.medium"),
-		MinCount:         aws.Int64(1),
-		MaxCount:         aws.Int64(1),
-		KeyName:          &dateName,
-		SecurityGroupIds: []*string{secRt.GroupId},
-		SubnetId:         aws.String(SubId),
+		ImageId:      aws.String(Ami),
+		InstanceType: aws.String("t3.medium"),
+		MinCount:     aws.Int64(1),
+		MaxCount:     aws.Int64(1),
+		KeyName:      &dateName,
 		NetworkInterfaces: []*ec2.InstanceNetworkInterfaceSpecification{{
+			DeviceIndex:               aws.Int64(0),
+			SubnetId:                  aws.String(SubId),
 			AssociateCarrierIpAddress: aws.Bool(true),
+			Groups:                    []*string{secRt.GroupId},
 		}},
 	}) //创建ec2实例
 	if runErr != nil {
@@ -147,6 +162,7 @@ func (p *Aws) CreateEc2Wl(SubId string, Ami string, Name string) (*Ec2Info, erro
 	}
 	return &Ec2Info{
 		Name:       &Name,
+		Ip:         runRt.Instances[0].PrivateIpAddress,
 		InstanceId: runRt.Instances[0].InstanceId,
 		Status:     runRt.Instances[0].State.Name,
 		Key:        keyRt.KeyMaterial,
