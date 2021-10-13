@@ -283,7 +283,6 @@ func (p *TgBot) GlobalMess(bot *tb.Bot) {
 				p.State[m.Sender.ID].Parent = 999
 			case 14: //暂停Ec2
 				defer delete(p.State, m.Sender.ID)
-				defer delete(p.State, m.Sender.ID)
 				awsRt, awsErr := aws.New(p.State[m.Sender.ID].Data["region"],
 					p.Config.UserInfo[m.Sender.ID].AwsSecret[p.Config.UserInfo[m.Sender.ID].NowKey].Id,
 					p.Config.UserInfo[m.Sender.ID].AwsSecret[p.Config.UserInfo[m.Sender.ID].NowKey].Secret)
@@ -304,6 +303,10 @@ func (p *TgBot) GlobalMess(bot *tb.Bot) {
 					log.Error("Stop ec2 error: ", stopErr)
 					return
 				}
+				_, sendErr := bot.Send(m.Sender, "暂停成功")
+				if sendErr != nil {
+					log.Error("Send message error: ", sendErr)
+				}
 			case 15: //获取aga备注
 				p.State[m.Sender.ID].Data = make(map[string]string)
 				p.State[m.Sender.ID].Data["agaName"] = m.Text
@@ -322,7 +325,7 @@ func (p *TgBot) GlobalMess(bot *tb.Bot) {
 					if sendErr != nil {
 						log.Error("Send message error: ", sendErr)
 					}
-					log.Error("Init aws oub error: ", awsErr)
+					log.Error("Init aws obj error: ", awsErr)
 					return
 				}
 				creRt, creErr := awsRt.CreateAga(p.State[m.Sender.ID].Data["agaName"],
@@ -345,6 +348,53 @@ func (p *TgBot) GlobalMess(bot *tb.Bot) {
 					*creRt.Name+"\nIP: \n"+ip+"\n状态: "+*creRt.Status+"\nArn: \n"+creRt.Arn)
 				if sendErr != nil {
 					log.Error("Send message error: ", sendErr)
+				}
+			case 17:
+				defer delete(p.State, m.Sender.ID)
+				awsRt, awsErr := aws.New(p.State[m.Sender.ID].Data["region"],
+					p.Config.UserInfo[m.Sender.ID].AwsSecret[p.Config.UserInfo[m.Sender.ID].NowKey].Id,
+					p.Config.UserInfo[m.Sender.ID].AwsSecret[p.Config.UserInfo[m.Sender.ID].NowKey].Secret)
+				if awsErr != nil {
+					_, sendErr := bot.Send(m.Sender, "启动失败")
+					if sendErr != nil {
+						log.Error("Send message error: ", sendErr)
+					}
+					log.Error("Init aws oub error: ", awsErr)
+					return
+				}
+				startErr := awsRt.StartEc2(m.Text)
+				if startErr != nil {
+					_, sendErr := bot.Send(m.Sender, "启动失败")
+					if sendErr != nil {
+						log.Error("send message error: ", sendErr)
+					}
+					log.Error("Start ec2 error: ", startErr)
+					return
+				}
+				_, sendErr := bot.Send(m.Sender, "启动成功")
+				if sendErr != nil {
+					log.Error("send message error: ", sendErr)
+				}
+			case 18:
+				awsRt, awsErr := aws.New(p.State[m.Sender.ID].Data["region"],
+					p.Config.UserInfo[m.Sender.ID].AwsSecret[p.Config.UserInfo[m.Sender.ID].NowKey].Id,
+					p.Config.UserInfo[m.Sender.ID].AwsSecret[p.Config.UserInfo[m.Sender.ID].NowKey].Secret)
+				if awsErr != nil {
+					_, sendErr := bot.Send(m.Sender, "删除失败")
+					if sendErr != nil {
+						log.Error("Send message error: ", sendErr)
+					}
+					log.Error("Init aws oub error: ", awsErr)
+					return
+				}
+				delErr := awsRt.DeleteAga(m.Text)
+				if delErr != nil {
+					_, sendErr := bot.Send(m.Sender, "删除失败")
+					if sendErr != nil {
+						log.Error("Send message error: ", sendErr)
+					}
+					log.Error("Delete aga error: ", awsErr)
+					return
 				}
 			default: //直接跳出
 				return

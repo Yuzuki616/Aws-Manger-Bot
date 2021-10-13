@@ -367,6 +367,14 @@ func (p *TgBot) Ec2Manger(bot *tb.Bot) {
 		}
 		p.State[c.Sender.ID] = &State{Parent: 108, Data: map[string]string{}}
 	})
+	startEc2 := key.Data("启动Ec2", "startEc2")
+	bot.Handle(&startEc2, func(c *tb.Callback) {
+		_, err := bot.Edit(c.Message, "请选择地区： ", p.RegionKey)
+		if err != nil {
+			log.Error("Edit message error: ", err)
+		}
+		p.State[c.Sender.ID] = &State{Parent: 110, Data: map[string]string{}}
+	})
 	delEc2 := key.Data("删除Ec2", "delEc2")
 	bot.Handle(&delEc2, func(c *tb.Callback) {
 		_, err := bot.Edit(c.Message, "请选择地区: ", p.RegionKey)
@@ -391,7 +399,8 @@ func (p *TgBot) Ec2Manger(bot *tb.Bot) {
 		}
 		p.State[c.Sender.ID] = &State{Parent: 107, Data: map[string]string{}}
 	})
-	key.Inline(key.Row(newEc2, listEc2), key.Row(newEc2Wl), key.Row(getPassword), key.Row(delEc2, chIp))
+	key.Inline(key.Row(newEc2, listEc2), key.Row(newEc2Wl), key.Row(getPassword),
+		key.Row(stopEc2, startEc2), key.Row(delEc2, chIp))
 	bot.Handle("/Ec2Manger", func(m *tb.Message) {
 		if m.Private() {
 			_, err := bot.Send(m.Sender, "请选择你要进行的操作", key)

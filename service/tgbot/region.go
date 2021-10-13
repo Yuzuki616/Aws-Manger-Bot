@@ -91,6 +91,14 @@ func (p *TgBot) regionHandle(bot *tb.Bot, c *tb.Callback) {
 		p.State[c.Sender.ID].Parent = 16
 		return
 	}
+	if p.State[c.Sender.ID].Parent == 110 {
+		_, err := bot.Edit(c.Message, "请输入要实例ID: ")
+		if err != nil {
+			log.Error("Edit message error: ", err)
+		}
+		p.State[c.Sender.ID].Parent = 17
+		return
+	}
 	_, err := bot.Edit(c.Message, "请选择EC2类型", p.TypeKey)
 	if err != nil {
 		log.Error("Edit message error: ", err)

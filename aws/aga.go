@@ -54,10 +54,9 @@ func (p *Aws) CreateAga(Name string, Region string, InstanceId string) (*AgaInfo
 		return nil, createEndErr
 	}
 	return &AgaInfo{
-		Name:   createAccRt.Accelerator.Name,
-		Status: createAccRt.Accelerator.Status,
-		Arn: *createAccRt.Accelerator.AcceleratorArn + "_" +
-			*createLiRt.Listener.ListenerArn + "_" + *createEndRt.EndpointGroup.EndpointGroupArn,
+		Name:     createAccRt.Accelerator.Name,
+		Status:   createAccRt.Accelerator.Status,
+		Arn:      *createAccRt.Accelerator.AcceleratorArn,
 		Ip:       createAccRt.Accelerator.IpSets,
 		Protocol: createLiRt.Listener.Protocol,
 		Port:     createEndRt.EndpointGroup.PortOverrides,
@@ -73,7 +72,7 @@ func (p *Aws) ListAga() ([]*aga.Accelerator, error) {
 	return rt.Accelerators, err
 }
 
-func (p *Aws) GetAgaInfo(AcceleratorArn string) (*AgaInfo, error) {
+/* func (p *Aws) GetAgaInfo(AcceleratorArn string) (*AgaInfo, error) {
 	svc := aga.New(p.Sess)
 	accRt, accErr := svc.DescribeAccelerator(&aga.DescribeAcceleratorInput{AcceleratorArn: aws.String(AcceleratorArn)})
 	if accErr != nil {
@@ -96,4 +95,20 @@ func (p *Aws) GetAgaInfo(AcceleratorArn string) (*AgaInfo, error) {
 		Protocol: liRt.Listeners[0].Protocol,
 		Port:     endRt.EndpointGroups[0].PortOverrides,
 	}, nil
+}*/
+
+func (p *Aws) DeleteAga(AcceleratorArn string) error {
+	svc := aga.New(p.Sess)
+	_, updateErr := svc.UpdateAccelerator(&aga.UpdateAcceleratorInput{
+		AcceleratorArn: aws.String(AcceleratorArn),
+		Enabled:        aws.Bool(false),
+	})
+	if updateErr != nil {
+		return updateErr
+	}
+	_, deleteErr := svc.DeleteAccelerator(&aga.DeleteAcceleratorInput{AcceleratorArn: aws.String(AcceleratorArn)})
+	if deleteErr != nil {
+		return deleteErr
+	}
+	return nil
 }
