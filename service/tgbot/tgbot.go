@@ -42,6 +42,7 @@ func (p *TgBot) Start() {
 指令列表:
 
 /Ec2Manger Ec2相关操作
+/AgaManger Aga相关操作
 /QuotaManger 配额相关操作`)
 		if err != nil {
 			log.Error("Send message error: ", err)
@@ -51,6 +52,7 @@ func (p *TgBot) Start() {
 	p.QuotaManger(bot)
 	p.Ec2Manger(bot)
 	p.setRegionKey(bot)
+	p.AgaManger(bot)
 	p.GlobalMess(bot)
 	bot.Start()
 }

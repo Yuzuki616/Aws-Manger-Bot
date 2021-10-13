@@ -46,6 +46,7 @@ func (c *Conf) LoadConfig() error {
 				log.Error("Write file error: ", writeErr)
 				os.Exit(1)
 			}
+			log.Error("已将默认配置文件写出，请填写bot token后重新启动")
 			log.Error("Exit")
 			os.Exit(1)
 		}
