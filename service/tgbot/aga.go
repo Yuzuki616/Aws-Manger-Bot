@@ -57,8 +57,8 @@ func (p *TgBot) AgaManger(bot *tb.Bot) {
 		p.State[c.Sender.ID] = &State{Parent: 18, Data: map[string]string{}}
 	})
 	key.Inline(key.Row(createAga, listAga), key.Row(delAga))
-	bot.Handle("/AgaManger", func(c *tb.Callback) {
-		_, err := bot.Edit(c.Message, "请选择要进行的操作", key)
+	bot.Handle("/AgaManger", func(m *tb.Message) {
+		_, err := bot.Edit(m, "请选择要进行的操作", key)
 		if err != nil {
 			log.Error("Edit message error: ")
 		}
