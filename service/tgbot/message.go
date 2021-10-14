@@ -169,7 +169,7 @@ func (p *TgBot) GlobalMess(bot *tb.Bot) {
 					}
 					return
 				}
-				_, sendErr := bot.Send(m.Sender, "更换ip成功，新的IP为: ", *ip)
+				_, sendErr := bot.Send(m.Sender, "更换ip成功，新的IP为: "+*ip)
 				if sendErr != nil {
 					log.Error("Send message error: ", sendErr)
 				}
