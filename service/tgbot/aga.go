@@ -7,7 +7,7 @@ import (
 )
 
 func (p *TgBot) AgaManger(bot *tb.Bot) {
-	key := tb.ReplyMarkup{}
+	key := &tb.ReplyMarkup{}
 	createAga := key.Data("创建Aga", "create_aga")
 	bot.Handle(&createAga, func(c *tb.Callback) {
 		_, err := bot.Edit(c.Message, "请输入Aga的备注(不要重复): ")
@@ -47,6 +47,10 @@ func (p *TgBot) AgaManger(bot *tb.Bot) {
 			agaList += "\n备注: " + *v.Name + "\n状态: " + *v.Status +
 				"\nIP: \n" + ip + "\nArn: " + *v.AcceleratorArn
 		}
+		_, sendErr := bot.Edit(c.Message, agaList)
+		if sendErr != nil {
+			log.Error("Send message error: ", sendErr)
+		}
 	})
 	delAga := key.Data("删除Aga", "del_aga")
 	bot.Handle(&delAga, func(c *tb.Callback) {
@@ -58,9 +62,9 @@ func (p *TgBot) AgaManger(bot *tb.Bot) {
 	})
 	key.Inline(key.Row(createAga, listAga), key.Row(delAga))
 	bot.Handle("/AgaManger", func(m *tb.Message) {
-		_, err := bot.Edit(m, "请选择要进行的操作", key)
+		_, err := bot.Send(m.Sender, "请选择要进行的操作", key)
 		if err != nil {
-			log.Error("Edit message error: ")
+			log.Error("Edit message error: ", err)
 		}
 	})
 }
