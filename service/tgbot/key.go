@@ -38,6 +38,13 @@ func (p *TgBot) KeyManger(bot *tb.Bot) {
 		log.Info("User: ", c.Sender.FirstName, " ",
 			c.Sender.LastName, " ID: ", c.Sender.ID, " Action:  List key")
 		tmp := "当前使用的密钥: " + p.Config.UserInfo[c.Sender.ID].NowKey + "\n\n已添加的密钥: "
+		if p.Config.UserInfo[c.Sender.ID].AwsSecret == nil {
+			_, err := bot.Edit(c.Message, "当前未添加任何密钥")
+			if err != nil {
+				log.Error("Edit Message error: ", err)
+			}
+			return
+		}
 		for key, val := range p.Config.UserInfo[c.Sender.ID].AwsSecret {
 			tmp += "\n\n备注: " + key + "\nID: " + val.Id + "\n密钥: " + val.Secret
 		}

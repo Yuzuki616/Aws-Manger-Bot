@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"sync"
+	"time"
 )
 
 type UserData struct {
@@ -46,7 +47,8 @@ func (c *Conf) LoadConfig() error {
 				os.Exit(1)
 			}
 			log.Error("已将默认配置文件写出，请填写bot token后重新启动")
-			log.Error("Exit")
+			log.Error("将于10秒后退出")
+			time.Sleep(time.Second * 10)
 			os.Exit(1)
 		}
 		return readErr
