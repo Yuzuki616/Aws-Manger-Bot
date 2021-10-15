@@ -338,6 +338,8 @@ func (p *TgBot) Ec2Manger(bot *tb.Bot) {
 	key := &tb.ReplyMarkup{}
 	newEc2 := key.Data("创建EC2", "createEc2")
 	bot.Handle(&newEc2, func(c *tb.Callback) {
+		log.Info("User: ", c.Sender.FirstName, " ",
+			c.Sender.LastName, " ID: ", c.Sender.ID, " Action:  Create ec2")
 		_, err := bot.Edit(c.Message, "请输入将要创建的ec2的备注: ")
 		if err != nil {
 			log.Println("Edit message error: ", err)
@@ -346,6 +348,8 @@ func (p *TgBot) Ec2Manger(bot *tb.Bot) {
 	})
 	newEc2Wl := key.Data("创建Ec2Wl", "createEc2Wl")
 	bot.Handle(&newEc2Wl, func(c *tb.Callback) {
+		log.Info("User: ", c.Sender.FirstName, " ",
+			c.Sender.LastName, " ID: ", c.Sender.ID, " Action:  Create ec2 wavelength")
 		_, err := bot.Edit(c.Message, "请选择Wavelength地区: ", regionWl)
 		if err != nil {
 			log.Println("Edit message error: ", err)
@@ -353,6 +357,8 @@ func (p *TgBot) Ec2Manger(bot *tb.Bot) {
 	})
 	listEc2 := key.Data("列出EC2", "listEc2")
 	bot.Handle(&listEc2, func(c *tb.Callback) {
+		log.Info("User: ", c.Sender.FirstName, " ",
+			c.Sender.LastName, " ID: ", c.Sender.ID, " Action:  List ec2")
 		_, err := bot.Edit(c.Message, "请选择AWS区域: ", p.RegionKey)
 		if err != nil {
 			log.Println("Edit message error: ", err)
@@ -361,6 +367,8 @@ func (p *TgBot) Ec2Manger(bot *tb.Bot) {
 	})
 	stopEc2 := key.Data("暂停Ec2", "stopEc2")
 	bot.Handle(&stopEc2, func(c *tb.Callback) {
+		log.Info("User: ", c.Sender.FirstName, " ",
+			c.Sender.LastName, " ID: ", c.Sender.ID, " Action:  Stop ec2")
 		_, err := bot.Edit(c.Message, "请选择地区： ", p.RegionKey)
 		if err != nil {
 			log.Error("Edit message error: ", err)
@@ -369,6 +377,8 @@ func (p *TgBot) Ec2Manger(bot *tb.Bot) {
 	})
 	startEc2 := key.Data("启动Ec2", "startEc2")
 	bot.Handle(&startEc2, func(c *tb.Callback) {
+		log.Info("User: ", c.Sender.FirstName, " ",
+			c.Sender.LastName, " ID: ", c.Sender.ID, " Action: Start ec2")
 		_, err := bot.Edit(c.Message, "请选择地区： ", p.RegionKey)
 		if err != nil {
 			log.Error("Edit message error: ", err)
@@ -377,6 +387,8 @@ func (p *TgBot) Ec2Manger(bot *tb.Bot) {
 	})
 	delEc2 := key.Data("删除Ec2", "delEc2")
 	bot.Handle(&delEc2, func(c *tb.Callback) {
+		log.Info("User: ", c.Sender.FirstName, " ",
+			c.Sender.LastName, " ID: ", c.Sender.ID, " Action: Delete ec2")
 		_, err := bot.Edit(c.Message, "请选择地区: ", p.RegionKey)
 		if err != nil {
 			log.Println("Edit message error: ", err)
@@ -385,6 +397,8 @@ func (p *TgBot) Ec2Manger(bot *tb.Bot) {
 	})
 	chIp := key.Data("更换IP", "changeIp")
 	bot.Handle(&chIp, func(c *tb.Callback) {
+		log.Info("User: ", c.Sender.FirstName, " ",
+			c.Sender.LastName, " ID: ", c.Sender.ID, " Action: Change Ip")
 		_, err := bot.Edit(c.Message, "请选择地区: ", p.RegionKey)
 		if err != nil {
 			log.Error("Edit message error: ", err)
@@ -393,6 +407,8 @@ func (p *TgBot) Ec2Manger(bot *tb.Bot) {
 	})
 	getPassword := key.Data("提取Windows密码", "get_password")
 	bot.Handle(&getPassword, func(c *tb.Callback) {
+		log.Info("User: ", c.Sender.FirstName, " ",
+			c.Sender.LastName, " ID: ", c.Sender.ID, " Action: Get windows password")
 		_, editErr := bot.Edit(c.Message, "请选择地区: ", p.RegionKey)
 		if editErr != nil {
 			log.Error("Edit message error: ", editErr)

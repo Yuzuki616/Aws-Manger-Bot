@@ -32,7 +32,7 @@ func main() {
 		os.Exit(1)
 	}
 	log.Info("Done")
-	switch config.LogLv {
+	switch config.LogLevel {
 	case "info":
 		log.SetLevel(log.InfoLevel)
 	case "warn":

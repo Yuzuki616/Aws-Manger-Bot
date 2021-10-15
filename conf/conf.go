@@ -9,21 +9,20 @@ import (
 )
 
 type UserData struct {
-	UserName  string                `yaml:"user_name"`
-	NowKey    string                `yaml:"now_key"`
-	AwsSecret map[string]*AwsSecret `yaml:"aws_secret"`
+	UserName  string                `yaml:"User_Name"`
+	NowKey    string                `yaml:"Now_Key"`
+	AwsSecret map[string]*AwsSecret `yaml:"Aws_Secret"`
 }
 
 type AwsSecret struct {
-	Name   string `yaml:"name"`
 	Id     string `yaml:"id"`
 	Secret string `yaml:"secret"`
 }
 
 type Conf struct {
-	LogLv    string            `yaml:"log_lv"`
-	BotToken string            `yaml:"bot_token"`
-	UserInfo map[int]*UserData `yaml:"user_info"`
+	LogLevel string            `yaml:"Log_Level"`
+	BotToken string            `yaml:"Bot_Token"`
+	UserInfo map[int]*UserData `yaml:"User_Info"`
 }
 
 func New() *Conf {
@@ -38,7 +37,7 @@ func (c *Conf) LoadConfig() error {
 		if os.IsNotExist(readErr) {
 			log.Error("Config file not found")
 			log.Error("Write default config file")
-			c.LogLv = "info"
+			c.LogLevel = "error"
 			c.UserInfo = map[int]*UserData{0: {}}
 			c.BotToken = "Tg Bot Token"
 			writeErr := c.SaveConfig()

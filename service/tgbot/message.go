@@ -67,6 +67,10 @@ func (p *TgBot) GlobalMess(bot *tb.Bot) {
 			case 3: //删除密钥
 				defer delete(p.State, m.Sender.ID)
 				if _, ok := p.Config.UserInfo[m.Sender.ID].AwsSecret[m.Text]; ok {
+					if p.Config.UserInfo[m.Sender.ID].NowKey == m.Text {
+						p.Config.UserInfo[m.Sender.ID].NowKey = ""
+					}
+					delete(p.Config.UserInfo[m.Sender.ID].AwsSecret, m.Text)
 					conf.Lock.Lock()
 					saveErr := p.Config.SaveConfig()
 					conf.Lock.Unlock()

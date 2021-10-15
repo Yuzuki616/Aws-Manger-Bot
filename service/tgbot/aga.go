@@ -10,6 +10,8 @@ func (p *TgBot) AgaManger(bot *tb.Bot) {
 	key := &tb.ReplyMarkup{}
 	createAga := key.Data("创建Aga", "create_aga")
 	bot.Handle(&createAga, func(c *tb.Callback) {
+		log.Info("User: ", c.Sender.FirstName, " ",
+			c.Sender.LastName, " ID: ", c.Sender.ID, " Action: Create aga")
 		_, err := bot.Edit(c.Message, "请输入Aga的备注(不要重复): ")
 		if err != nil {
 			log.Error("Edit message error: ", err)
@@ -18,6 +20,8 @@ func (p *TgBot) AgaManger(bot *tb.Bot) {
 	})
 	listAga := key.Data("列出Aga", "list_aga")
 	bot.Handle(&listAga, func(c *tb.Callback) {
+		log.Info("User: ", c.Sender.FirstName, " ",
+			c.Sender.LastName, " ID: ", c.Sender.ID, " Action: List aga")
 		awsRt, awsErr := aws.New("us-west-2",
 			p.Config.UserInfo[c.Sender.ID].AwsSecret[p.Config.UserInfo[c.Sender.ID].NowKey].Id,
 			p.Config.UserInfo[c.Sender.ID].AwsSecret[p.Config.UserInfo[c.Sender.ID].NowKey].Secret)
@@ -54,6 +58,8 @@ func (p *TgBot) AgaManger(bot *tb.Bot) {
 	})
 	delAga := key.Data("删除Aga", "del_aga")
 	bot.Handle(&delAga, func(c *tb.Callback) {
+		log.Info("User: ", c.Sender.FirstName, " ",
+			c.Sender.LastName, " ID: ", c.Sender.ID, " Action: Delete aga")
 		_, err := bot.Edit(c.Message, "请输入Arn: ")
 		if err != nil {
 			log.Error("Edit message error: ", err)

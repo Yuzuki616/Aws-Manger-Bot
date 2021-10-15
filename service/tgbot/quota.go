@@ -31,6 +31,8 @@ func (p *TgBot) QuotaManger(bot *tb.Bot) {
 	key := &tb.ReplyMarkup{}
 	getQuota := key.Data("查看配额", "get_quota")
 	bot.Handle(&getQuota, func(c *tb.Callback) {
+		log.Info("User: ", c.Sender.FirstName, " ",
+			c.Sender.LastName, " ID: ", c.Sender.ID, " Action:  Get Quota")
 		_, editErr := bot.Edit(c.Message, "请选择配额", quotaKey)
 		if editErr != nil {
 			log.Error("Edit message error: ", editErr)
@@ -38,6 +40,8 @@ func (p *TgBot) QuotaManger(bot *tb.Bot) {
 	})
 	updateQuota := key.Data("更新配额", "update_quota")
 	bot.Handle(&updateQuota, func(c *tb.Callback) {
+		log.Info("User: ", c.Sender.FirstName, " ",
+			c.Sender.LastName, " ID: ", c.Sender.ID, " Action:  Update quota")
 		_, err := bot.Edit(c.Message, "请选择地区", p.RegionKey)
 		if err != nil {
 			log.Println("Edit message error: ", err)
