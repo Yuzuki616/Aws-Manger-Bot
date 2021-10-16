@@ -4,8 +4,6 @@ import (
 	"github.com/338317/Aws-Manger-Bot/aws"
 	log "github.com/sirupsen/logrus"
 	tb "gopkg.in/tucnak/telebot.v2"
-	"io/ioutil"
-	"os"
 	"time"
 )
 
@@ -21,15 +19,6 @@ const (
 	londonWL = "eu-west-2-wl1-lon-wlz-1"
 	oregonWl = "us-west-2-wl1-phx-wlz-1"
 )
-
-func keySave(key string) string {
-	tempName := time.Unix(time.Now().Unix(), 0).Format("./_2006-01-02_15:04:05.tmp")
-	err := ioutil.WriteFile(tempName, []byte(key), 0644)
-	if err != nil {
-		log.Println("Save key file error:", err)
-	}
-	return tempName
-} //缓存ssh密钥
 
 func (p *TgBot) createEc2(bot *tb.Bot, c *tb.Callback) {
 	if _, ok := p.Config.UserInfo[c.Sender.ID]; ok {
@@ -134,29 +123,19 @@ func (p *TgBot) createEc2(bot *tb.Bot, c *tb.Callback) {
 					if err != nil {
 						log.Error("Send message error: ", err)
 					}
-					log.Error(getErr)
+					log.Error("Get ec2 info error:", getErr)
 					return
 				}
 				if *getRt.Status == "running" {
-					fileName := keySave(*InstanceInfo.Key)
 					if getRt.Ip == nil {
 						getRt.Ip = InstanceInfo.Ip
 					}
 					log.Info(getRt.Ip)
 					_, err := bot.Send(c.Sender, "创建成功！\nUbuntu默认用户名ubuntu, Debian默认用户名admin\n\n实例信息: \n备注: "+*getRt.Name+
 						"\n实例ID: "+*getRt.InstanceId+
-						"\nIP: "+*getRt.Ip+"\nSSH密钥: ")
+						"\nIP: "+*getRt.Ip+"\nSSH密钥: \n\n"+*getRt.Key)
 					if err != nil {
 						log.Error("Send message error: ", err)
-					}
-					_, sendErr := bot.SendAlbum(c.Sender,
-						tb.Album{&tb.Document{File: tb.FromDisk(fileName), FileName: *InstanceInfo.Name + "_key.pem"}})
-					if sendErr != nil {
-						log.Error("Send file error: ", sendErr)
-					}
-					removeErr := os.Remove(fileName)
-					if removeErr != nil {
-						log.Error("Remove temp file error: ", removeErr)
 					}
 					break
 				}
