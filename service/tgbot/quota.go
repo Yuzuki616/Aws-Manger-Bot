@@ -18,6 +18,7 @@ func (p *TgBot) QuotaManger(bot *tb.Bot) {
 		if err != nil {
 			log.Println("Edit message error: ", err)
 		}
+		p.State[c.Sender.ID] = &State{Parent: 106, Data: map[string]string{}}
 	})
 	other := quotaKey.Data("查看自定义配额", "get_other")
 	bot.Handle(&other, func(c *tb.Callback) {

@@ -162,6 +162,23 @@ func (p *Aws) RebootEc2(InstanceId string) error {
 
 func (p *Aws) DeleteEc2(InstanceId string) error {
 	svc := ec2.New(p.Sess)
+	ip, ipErr := svc.DescribeAddresses(&ec2.DescribeAddressesInput{
+		Filters: []*ec2.Filter{
+			{
+				Name:   aws.String("instance-id"),
+				Values: []*string{aws.String(InstanceId)},
+			},
+		},
+	})
+	if ipErr != nil {
+		return ipErr
+	}
+	if len(ip.Addresses) != 0 {
+		_, relErr := svc.ReleaseAddress(&ec2.ReleaseAddressInput{AllocationId: ip.Addresses[0].AssociationId})
+		if relErr != nil {
+			return relErr
+		}
+	}
 	_, err := svc.TerminateInstances(&ec2.TerminateInstancesInput{InstanceIds: []*string{aws.String(InstanceId)}})
 	if err != nil {
 		return err
