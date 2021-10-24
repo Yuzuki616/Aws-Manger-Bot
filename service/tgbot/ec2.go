@@ -139,7 +139,7 @@ func (p *TgBot) createEc2(bot *tb.Bot, m *tb.Message) {
 					log.Info(getRt.Ip)
 					_, err := bot.Send(m.Sender, "创建成功！\nUbuntu默认用户名ubuntu, Debian默认用户名admin\n\n实例信息: \n备注: "+*getRt.Name+
 						"\n实例ID: "+*getRt.InstanceId+
-						"\nIP: "+*getRt.Ip+"\nSSH密钥: \n\n"+*getRt.Key)
+						"\nIP: "+*getRt.Ip+"\nSSH密钥: \n\n"+*InstanceInfo.Key)
 					if err != nil {
 						log.Error("Send message error: ", err)
 					}
