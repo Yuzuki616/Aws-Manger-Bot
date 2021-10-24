@@ -100,7 +100,7 @@ func (p Aws) GetSubnetInfo() (*ec2.DescribeSubnetsOutput, error) {
 	return sub, nil
 }
 
-func (p *Aws) CreateEc2Wl(SubId string, Ami string, Name string) (*Ec2Info, error) {
+func (p *Aws) CreateEc2Wl(SubId string, Ami string, Name string, DiskSize int64) (*Ec2Info, error) {
 	svc := ec2.New(p.Sess)
 	dateName := Name + time.Unix(time.Now().Unix(), 0).Format("_2006-01-02_15:04:05")
 	keyRt, keyErr := svc.CreateKeyPair(&ec2.CreateKeyPairInput{KeyName: &dateName})
@@ -144,6 +144,8 @@ func (p *Aws) CreateEc2Wl(SubId string, Ami string, Name string) (*Ec2Info, erro
 			AssociateCarrierIpAddress: aws.Bool(true),
 			Groups:                    []*string{secRt.GroupId},
 		}},
+		BlockDeviceMappings: []*ec2.BlockDeviceMapping{{DeviceName: aws.String("/dev/sda1"),
+			Ebs: &ec2.EbsBlockDevice{VolumeSize: aws.Int64(DiskSize)}}},
 	}) //创建ec2实例
 	if runErr != nil {
 		return nil, runErr

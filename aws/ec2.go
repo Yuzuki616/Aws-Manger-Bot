@@ -14,7 +14,7 @@ type Ec2Info struct {
 	Key        *string
 }
 
-func (p *Aws) CreateEc2(Ami string, Ec2Type string, Name string) (*Ec2Info, error) {
+func (p *Aws) CreateEc2(Ami string, Ec2Type string, Name string, DiskSize int64) (*Ec2Info, error) {
 	svc := ec2.New(p.Sess)
 	dateName := Name + time.Unix(time.Now().Unix(), 0).Format("_2006-01-02_15:04:05")
 	keyRt, keyErr := svc.CreateKeyPair(&ec2.CreateKeyPairInput{KeyName: &dateName})
@@ -47,11 +47,13 @@ func (p *Aws) CreateEc2(Ami string, Ec2Type string, Name string) (*Ec2Info, erro
 		return nil, authSecInErr
 	}
 	runRt, runErr := svc.RunInstances(&ec2.RunInstancesInput{
-		ImageId:          aws.String(Ami),
-		InstanceType:     aws.String(Ec2Type),
-		MinCount:         aws.Int64(1),
-		MaxCount:         aws.Int64(1),
-		KeyName:          &dateName,
+		ImageId:      aws.String(Ami),
+		InstanceType: aws.String(Ec2Type),
+		MinCount:     aws.Int64(1),
+		MaxCount:     aws.Int64(1),
+		KeyName:      &dateName,
+		BlockDeviceMappings: []*ec2.BlockDeviceMapping{{DeviceName: aws.String("/dev/sda1"),
+			Ebs: &ec2.EbsBlockDevice{VolumeSize: aws.Int64(DiskSize)}}},
 		SecurityGroupIds: []*string{secRt.GroupId},
 	}) //创建ec2实例
 	if runErr != nil {

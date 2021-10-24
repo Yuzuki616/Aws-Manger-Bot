@@ -4,6 +4,7 @@ import (
 	"github.com/338317/Aws-Manger-Bot/aws"
 	log "github.com/sirupsen/logrus"
 	tb "gopkg.in/tucnak/telebot.v2"
+	"strconv"
 	"time"
 )
 
@@ -20,36 +21,40 @@ const (
 	oregonWl = "us-west-2-wl1-phx-wlz-1"
 )
 
-func (p *TgBot) createEc2(bot *tb.Bot, c *tb.Callback) {
-	if _, ok := p.Config.UserInfo[c.Sender.ID]; ok {
-		_, err := bot.Edit(c.Message, "正在创建EC2...")
+func (p *TgBot) createEc2(bot *tb.Bot, m *tb.Message) {
+	if _, ok := p.Config.UserInfo[m.Sender.ID]; ok {
+		_, err := bot.Send(m.Sender, "正在创建EC2...")
 		if err != nil {
 			log.Error("Edit message error: ", err)
 		}
-		if p.Config.UserInfo[c.Sender.ID].NowKey == "" {
-			_, err := bot.Edit(c.Message, "请先通过/KeyManger命令选择密钥")
+		if p.Config.UserInfo[m.Sender.ID].NowKey == "" {
+			_, err := bot.Send(m.Sender, "请先通过/KeyManger命令选择密钥")
 			if err != nil {
 				log.Error("Edit message error: ", err)
 			}
 		} else {
-			awsO, newErr := aws.New(p.State[c.Sender.ID].Data["region"],
-				p.Config.UserInfo[c.Sender.ID].AwsSecret[p.Config.UserInfo[c.Sender.ID].NowKey].Id,
-				p.Config.UserInfo[c.Sender.ID].AwsSecret[p.Config.UserInfo[c.Sender.ID].NowKey].Secret)
+			awsO, newErr := aws.New(p.State[m.Sender.ID].Data["region"],
+				p.Config.UserInfo[m.Sender.ID].AwsSecret[p.Config.UserInfo[m.Sender.ID].NowKey].Id,
+				p.Config.UserInfo[m.Sender.ID].AwsSecret[p.Config.UserInfo[m.Sender.ID].NowKey].Secret)
 			if newErr != nil {
-				_, err := bot.Send(c.Sender, "创建失败!")
+				_, err := bot.Send(m.Sender, "创建失败!")
 				if err != nil {
 					log.Error("Send message error: ", err)
 				}
 				log.Error(newErr)
 				return
 			}
+			diskSize, parErr := strconv.ParseInt(p.State[m.Sender.ID].Data["disk"], 10, 64)
+			if parErr != nil {
+				log.Error("String to int64 error: ", parErr)
+			}
 			var amiId string
-			if _, ok := p.State[c.Sender.ID].Data["amiId"]; ok {
-				amiId = p.State[c.Sender.ID].Data["amiId"]
+			if _, ok := p.State[m.Sender.ID].Data["amiId"]; ok {
+				amiId = p.State[m.Sender.ID].Data["amiId"]
 			} else {
-				amiTmp, amiErr := awsO.GetAmiId(p.State[c.Sender.ID].Data["ami"])
+				amiTmp, amiErr := awsO.GetAmiId(p.State[m.Sender.ID].Data["ami"])
 				if amiErr != nil {
-					_, err := bot.Send(c.Sender, "创建失败!")
+					_, err := bot.Send(m.Sender, "创建失败!")
 					if err != nil {
 						log.Error("Send message error: ", err)
 					}
@@ -63,10 +68,10 @@ func (p *TgBot) createEc2(bot *tb.Bot, c *tb.Callback) {
 				amiId = amiTmp
 			}
 			var InstanceInfo *aws.Ec2Info
-			if _, ok := p.State[c.Sender.ID].Data["zone"]; ok {
+			if _, ok := p.State[m.Sender.ID].Data["zone"]; ok {
 				sub, caErr := awsO.GetSubnetInfo()
 				if caErr != nil {
-					_, err := bot.Send(c.Sender, "创建失败!")
+					_, err := bot.Send(m.Sender, "创建失败!")
 					if err != nil {
 						log.Error("Send message error: ", err)
 					}
@@ -75,9 +80,9 @@ func (p *TgBot) createEc2(bot *tb.Bot, c *tb.Callback) {
 				}
 				var subId1 string
 				if len(sub.Subnets) == 0 {
-					subId, wlErr := awsO.CreateWl(p.State[c.Sender.ID].Data["zone"])
+					subId, wlErr := awsO.CreateWl(p.State[m.Sender.ID].Data["zone"])
 					if wlErr != nil {
-						_, err := bot.Send(c.Sender, "创建失败!")
+						_, err := bot.Send(m.Sender, "创建失败!")
 						if err != nil {
 							log.Error("Send message error: ", err)
 						}
@@ -88,9 +93,9 @@ func (p *TgBot) createEc2(bot *tb.Bot, c *tb.Callback) {
 				} else {
 					subId1 = *sub.Subnets[0].SubnetId
 				}
-				creRt, creErr := awsO.CreateEc2Wl(subId1, amiId, p.State[c.Sender.ID].Data["name"])
+				creRt, creErr := awsO.CreateEc2Wl(subId1, amiId, p.State[m.Sender.ID].Data["name"], diskSize)
 				if creErr != nil {
-					_, err := bot.Send(c.Sender, "创建失败!")
+					_, err := bot.Send(m.Sender, "创建失败!")
 					if err != nil {
 						log.Error("Send message error: ", err)
 					}
@@ -100,10 +105,11 @@ func (p *TgBot) createEc2(bot *tb.Bot, c *tb.Callback) {
 				InstanceInfo = creRt
 			} else {
 				creRt, creErr := awsO.CreateEc2(amiId,
-					p.State[c.Sender.ID].Data["type"],
-					p.State[c.Sender.ID].Data["name"])
+					p.State[m.Sender.ID].Data["type"],
+					p.State[m.Sender.ID].Data["name"],
+					diskSize)
 				if creErr != nil {
-					_, err := bot.Send(c.Sender, "创建失败!")
+					_, err := bot.Send(m.Sender, "创建失败!")
 					if err != nil {
 						log.Error("Send message error: ", err)
 					}
@@ -112,14 +118,14 @@ func (p *TgBot) createEc2(bot *tb.Bot, c *tb.Callback) {
 				}
 				InstanceInfo = creRt
 			}
-			_, err := bot.Send(c.Sender, "已添加到创建队列，正在等待创建...")
+			_, err := bot.Send(m.Sender, "已添加到创建队列，正在等待创建...")
 			if err != nil {
 				log.Error("Send message error: ", err)
 			}
 			for true {
 				getRt, getErr := awsO.GetEc2Info(*InstanceInfo.InstanceId)
 				if getErr != nil {
-					_, err := bot.Send(c.Sender, "获取实例信息失败！")
+					_, err := bot.Send(m.Sender, "获取实例信息失败！")
 					if err != nil {
 						log.Error("Send message error: ", err)
 					}
@@ -131,7 +137,7 @@ func (p *TgBot) createEc2(bot *tb.Bot, c *tb.Callback) {
 						getRt.Ip = InstanceInfo.Ip
 					}
 					log.Info(getRt.Ip)
-					_, err := bot.Send(c.Sender, "创建成功！\nUbuntu默认用户名ubuntu, Debian默认用户名admin\n\n实例信息: \n备注: "+*getRt.Name+
+					_, err := bot.Send(m.Sender, "创建成功！\nUbuntu默认用户名ubuntu, Debian默认用户名admin\n\n实例信息: \n备注: "+*getRt.Name+
 						"\n实例ID: "+*getRt.InstanceId+
 						"\nIP: "+*getRt.Ip+"\nSSH密钥: \n\n"+*getRt.Key)
 					if err != nil {
@@ -143,7 +149,7 @@ func (p *TgBot) createEc2(bot *tb.Bot, c *tb.Callback) {
 			}
 		}
 	} else {
-		_, err := bot.Edit(c.Message, "请先通过/KeyManger命令添加密钥")
+		_, err := bot.Send(m.Sender, "请先通过/KeyManger命令添加密钥")
 		if err != nil {
 			log.Error("Edit message error: ", err)
 		}
@@ -203,26 +209,39 @@ func (p *TgBot) Ec2Manger(bot *tb.Bot) {
 	p.AmiKey = amiKey
 	bot.Handle(&debian, func(c *tb.Callback) {
 		p.State[c.Sender.ID].Data["ami"] = debian10
-		defer delete(p.State, c.Sender.ID)
-		p.createEc2(bot, c)
+		_, err := bot.Edit(c.Message, "请输入硬盘大小: ")
+		if err != nil {
+			log.Error("Edit message error: ", err)
+		}
+		p.State[c.Sender.ID].Parent = 19
 	})
 	ubuntu := amiKey.Data("Ubuntu20.04", "ubuntu2004")
 	bot.Handle(&ubuntu, func(c *tb.Callback) {
 		p.State[c.Sender.ID].Data["ami"] = ubuntu2004
 		defer delete(p.State, c.Sender.ID)
-		p.createEc2(bot, c)
+		_, err := bot.Edit(c.Message, "请输入硬盘大小: ")
+		if err != nil {
+			log.Error("Edit message error: ", err)
+		}
+		p.State[c.Sender.ID].Parent = 19
 	})
 	redhat := amiKey.Data("Redhat8", "redhat8")
 	bot.Handle(&redhat, func(c *tb.Callback) {
 		p.State[c.Sender.ID].Data["ami"] = redhat8
-		defer delete(p.State, c.Sender.ID)
-		p.createEc2(bot, c)
+		_, err := bot.Edit(c.Message, "请输入硬盘大小: ")
+		if err != nil {
+			log.Error("Edit message error: ", err)
+		}
+		p.State[c.Sender.ID].Parent = 19
 	})
 	windows := amiKey.Data("Windows2019", "windows2019")
 	bot.Handle(&windows, func(c *tb.Callback) {
 		p.State[c.Sender.ID].Data["ami"] = windows2019
-		defer delete(p.State, c.Sender.ID)
-		p.createEc2(bot, c)
+		_, err := bot.Edit(c.Message, "请输入硬盘大小: ")
+		if err != nil {
+			log.Error("Edit message error: ", err)
+		}
+		p.State[c.Sender.ID].Parent = 19
 	})
 	otherAmi := amiKey.Data("其他系统", "other")
 	bot.Handle(&otherAmi, func(c *tb.Callback) {

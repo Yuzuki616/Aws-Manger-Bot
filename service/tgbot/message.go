@@ -179,8 +179,11 @@ func (p *TgBot) GlobalMess(bot *tb.Bot) {
 				}
 			case 8: //获取AMI
 				p.State[m.Sender.ID].Data["amiID"] = m.Text
-				defer delete(p.State, m.Sender.ID)
-				p.createEc2(bot, &tb.Callback{Sender: m.Sender, Message: m})
+				_, err := bot.Send(m.Sender, "请输入硬盘大小: ")
+				if err != nil {
+					log.Error("Edit message error: ", err)
+				}
+				p.State[m.Sender.ID].Parent = 19
 			case 9: //选择操作系统
 				p.State[m.Sender.ID].Data["type"] = m.Text
 				_, err := bot.Send(m.Sender, "请选择操作系统", p.AmiKey)
@@ -353,7 +356,7 @@ func (p *TgBot) GlobalMess(bot *tb.Bot) {
 				if sendErr != nil {
 					log.Error("Send message error: ", sendErr)
 				}
-			case 17:
+			case 17: //启动Ec2
 				defer delete(p.State, m.Sender.ID)
 				awsRt, awsErr := aws.New(p.State[m.Sender.ID].Data["region"],
 					p.Config.UserInfo[m.Sender.ID].AwsSecret[p.Config.UserInfo[m.Sender.ID].NowKey].Id,
@@ -379,7 +382,7 @@ func (p *TgBot) GlobalMess(bot *tb.Bot) {
 				if sendErr != nil {
 					log.Error("send message error: ", sendErr)
 				}
-			case 18:
+			case 18: //删除Aga
 				awsRt, awsErr := aws.New(p.State[m.Sender.ID].Data["region"],
 					p.Config.UserInfo[m.Sender.ID].AwsSecret[p.Config.UserInfo[m.Sender.ID].NowKey].Id,
 					p.Config.UserInfo[m.Sender.ID].AwsSecret[p.Config.UserInfo[m.Sender.ID].NowKey].Secret)
@@ -400,6 +403,10 @@ func (p *TgBot) GlobalMess(bot *tb.Bot) {
 					log.Error("Delete aga error: ", awsErr)
 					return
 				}
+			case 19: //获取硬盘大小
+				p.State[m.Sender.ID].Data["disk"] = m.Text
+				defer delete(p.State, m.Sender.ID)
+				p.createEc2(bot, m)
 			default: //直接跳出
 				return
 			}
