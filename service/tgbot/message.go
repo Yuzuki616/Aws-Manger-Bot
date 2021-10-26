@@ -129,7 +129,8 @@ func (p *TgBot) GlobalMess(bot *tb.Bot) {
 				defer delete(p.State, m.Sender.ID)
 				newRt, newErr := aws.New(p.State[m.Sender.ID].Data["region"],
 					p.Config.UserInfo[m.Sender.ID].AwsSecret[p.Config.UserInfo[m.Sender.ID].NowKey].Id,
-					p.Config.UserInfo[m.Sender.ID].AwsSecret[p.Config.UserInfo[m.Sender.ID].NowKey].Secret)
+					p.Config.UserInfo[m.Sender.ID].AwsSecret[p.Config.UserInfo[m.Sender.ID].NowKey].Secret,
+					p.Config.UserInfo[m.Sender.ID].AwsSecret[p.Config.UserInfo[m.Sender.ID].NowKey].Proxy)
 				if newErr != nil {
 					_, sendErr := bot.Send(m.Sender, "删除失败！")
 					if sendErr != nil {
@@ -155,7 +156,8 @@ func (p *TgBot) GlobalMess(bot *tb.Bot) {
 				defer delete(p.State, m.Sender.ID)
 				newRt, newErr := aws.New(p.State[m.Sender.ID].Data["region"],
 					p.Config.UserInfo[m.Sender.ID].AwsSecret[p.Config.UserInfo[m.Sender.ID].NowKey].Id,
-					p.Config.UserInfo[m.Sender.ID].AwsSecret[p.Config.UserInfo[m.Sender.ID].NowKey].Secret)
+					p.Config.UserInfo[m.Sender.ID].AwsSecret[p.Config.UserInfo[m.Sender.ID].NowKey].Secret,
+					p.Config.UserInfo[m.Sender.ID].AwsSecret[p.Config.UserInfo[m.Sender.ID].NowKey].Proxy)
 				if newErr != nil {
 					_, sendErr := bot.Send(m.Sender, "更换失败！")
 					if sendErr != nil {
@@ -195,7 +197,8 @@ func (p *TgBot) GlobalMess(bot *tb.Bot) {
 				code := strings.Split(m.Text, " ")
 				newRt, newErr := aws.New(p.State[m.Sender.ID].Data["region"],
 					p.Config.UserInfo[m.Sender.ID].AwsSecret[p.Config.UserInfo[m.Sender.ID].NowKey].Id,
-					p.Config.UserInfo[m.Sender.ID].AwsSecret[p.Config.UserInfo[m.Sender.ID].NowKey].Secret)
+					p.Config.UserInfo[m.Sender.ID].AwsSecret[p.Config.UserInfo[m.Sender.ID].NowKey].Secret,
+					p.Config.UserInfo[m.Sender.ID].AwsSecret[p.Config.UserInfo[m.Sender.ID].NowKey].Proxy)
 				if newErr != nil {
 					_, sendErr := bot.Send(m.Sender, "查看失败")
 					if sendErr != nil {
@@ -223,7 +226,8 @@ func (p *TgBot) GlobalMess(bot *tb.Bot) {
 				code := strings.Split(m.Text, " ")
 				newRt, newErr := aws.New(p.State[m.Sender.ID].Data["region"],
 					p.Config.UserInfo[m.Sender.ID].AwsSecret[p.Config.UserInfo[m.Sender.ID].NowKey].Id,
-					p.Config.UserInfo[m.Sender.ID].AwsSecret[p.Config.UserInfo[m.Sender.ID].NowKey].Secret)
+					p.Config.UserInfo[m.Sender.ID].AwsSecret[p.Config.UserInfo[m.Sender.ID].NowKey].Secret,
+					p.Config.UserInfo[m.Sender.ID].AwsSecret[p.Config.UserInfo[m.Sender.ID].NowKey].Proxy)
 				if newErr != nil {
 					_, sendErr := bot.Send(m.Sender, "修改失败")
 					if sendErr != nil {
@@ -258,7 +262,8 @@ func (p *TgBot) GlobalMess(bot *tb.Bot) {
 				defer delete(p.State, m.Sender.ID)
 				awsRt, awsErr := aws.New(p.State[m.Sender.ID].Data["region"],
 					p.Config.UserInfo[m.Sender.ID].AwsSecret[p.Config.UserInfo[m.Sender.ID].NowKey].Id,
-					p.Config.UserInfo[m.Sender.ID].AwsSecret[p.Config.UserInfo[m.Sender.ID].NowKey].Secret)
+					p.Config.UserInfo[m.Sender.ID].AwsSecret[p.Config.UserInfo[m.Sender.ID].NowKey].Secret,
+					p.Config.UserInfo[m.Sender.ID].AwsSecret[p.Config.UserInfo[m.Sender.ID].NowKey].Proxy)
 				if awsErr != nil {
 					_, sendErr := bot.Send(m.Sender, "获取失败")
 					if sendErr != nil {
@@ -292,7 +297,8 @@ func (p *TgBot) GlobalMess(bot *tb.Bot) {
 				defer delete(p.State, m.Sender.ID)
 				awsRt, awsErr := aws.New(p.State[m.Sender.ID].Data["region"],
 					p.Config.UserInfo[m.Sender.ID].AwsSecret[p.Config.UserInfo[m.Sender.ID].NowKey].Id,
-					p.Config.UserInfo[m.Sender.ID].AwsSecret[p.Config.UserInfo[m.Sender.ID].NowKey].Secret)
+					p.Config.UserInfo[m.Sender.ID].AwsSecret[p.Config.UserInfo[m.Sender.ID].NowKey].Secret,
+					p.Config.UserInfo[m.Sender.ID].AwsSecret[p.Config.UserInfo[m.Sender.ID].NowKey].Proxy)
 				if awsErr != nil {
 					_, sendErr := bot.Send(m.Sender, "暂停失败")
 					if sendErr != nil {
@@ -326,7 +332,8 @@ func (p *TgBot) GlobalMess(bot *tb.Bot) {
 				defer delete(p.State, m.Sender.ID)
 				awsRt, awsErr := aws.New("us-west-2",
 					p.Config.UserInfo[m.Sender.ID].AwsSecret[p.Config.UserInfo[m.Sender.ID].NowKey].Id,
-					p.Config.UserInfo[m.Sender.ID].AwsSecret[p.Config.UserInfo[m.Sender.ID].NowKey].Secret)
+					p.Config.UserInfo[m.Sender.ID].AwsSecret[p.Config.UserInfo[m.Sender.ID].NowKey].Secret,
+					p.Config.UserInfo[m.Sender.ID].AwsSecret[p.Config.UserInfo[m.Sender.ID].NowKey].Proxy)
 				if awsErr != nil {
 					_, sendErr := bot.Send(m.Sender, "创建失败")
 					if sendErr != nil {
@@ -360,7 +367,8 @@ func (p *TgBot) GlobalMess(bot *tb.Bot) {
 				defer delete(p.State, m.Sender.ID)
 				awsRt, awsErr := aws.New(p.State[m.Sender.ID].Data["region"],
 					p.Config.UserInfo[m.Sender.ID].AwsSecret[p.Config.UserInfo[m.Sender.ID].NowKey].Id,
-					p.Config.UserInfo[m.Sender.ID].AwsSecret[p.Config.UserInfo[m.Sender.ID].NowKey].Secret)
+					p.Config.UserInfo[m.Sender.ID].AwsSecret[p.Config.UserInfo[m.Sender.ID].NowKey].Secret,
+					p.Config.UserInfo[m.Sender.ID].AwsSecret[p.Config.UserInfo[m.Sender.ID].NowKey].Proxy)
 				if awsErr != nil {
 					_, sendErr := bot.Send(m.Sender, "启动失败")
 					if sendErr != nil {
@@ -385,7 +393,8 @@ func (p *TgBot) GlobalMess(bot *tb.Bot) {
 			case 18: //删除Aga
 				awsRt, awsErr := aws.New(p.State[m.Sender.ID].Data["region"],
 					p.Config.UserInfo[m.Sender.ID].AwsSecret[p.Config.UserInfo[m.Sender.ID].NowKey].Id,
-					p.Config.UserInfo[m.Sender.ID].AwsSecret[p.Config.UserInfo[m.Sender.ID].NowKey].Secret)
+					p.Config.UserInfo[m.Sender.ID].AwsSecret[p.Config.UserInfo[m.Sender.ID].NowKey].Secret,
+					p.Config.UserInfo[m.Sender.ID].AwsSecret[p.Config.UserInfo[m.Sender.ID].NowKey].Proxy)
 				if awsErr != nil {
 					_, sendErr := bot.Send(m.Sender, "删除失败")
 					if sendErr != nil {
@@ -407,6 +416,30 @@ func (p *TgBot) GlobalMess(bot *tb.Bot) {
 				p.State[m.Sender.ID].Data["disk"] = m.Text
 				defer delete(p.State, m.Sender.ID)
 				p.createEc2(bot, m)
+			case 20: //获取密钥备注
+				p.State[m.Sender.ID].Data["name"] = m.Text
+				_, err := bot.Send(m.Sender, "请输入代理地址: ")
+				if err != nil {
+					log.Error("Send message error: ", err)
+				}
+				p.State[m.Sender.ID].Parent = 21
+			case 21:
+				defer delete(p.State, m.Sender.ID)
+				p.Config.UserInfo[m.Sender.ID].AwsSecret[p.State[m.Sender.ID].Data["name"]].Proxy = m.Text
+				conf.Lock.Lock()
+				saveErr := p.Config.SaveConfig()
+				conf.Lock.Unlock()
+				if saveErr != nil {
+					_, sendErr := bot.Send(m.Sender, "添加失败")
+					if sendErr != nil {
+						log.Error("Send message error: ", sendErr)
+					}
+					return
+				}
+				_, sendErr := bot.Send(m.Sender, "添加成功")
+				if sendErr != nil {
+					log.Error("Send message error: ", sendErr)
+				}
 			default: //直接跳出
 				return
 			}

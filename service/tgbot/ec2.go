@@ -35,7 +35,8 @@ func (p *TgBot) createEc2(bot *tb.Bot, m *tb.Message) {
 		} else {
 			awsO, newErr := aws.New(p.State[m.Sender.ID].Data["region"],
 				p.Config.UserInfo[m.Sender.ID].AwsSecret[p.Config.UserInfo[m.Sender.ID].NowKey].Id,
-				p.Config.UserInfo[m.Sender.ID].AwsSecret[p.Config.UserInfo[m.Sender.ID].NowKey].Secret)
+				p.Config.UserInfo[m.Sender.ID].AwsSecret[p.Config.UserInfo[m.Sender.ID].NowKey].Secret,
+				p.Config.UserInfo[m.Sender.ID].AwsSecret[p.Config.UserInfo[m.Sender.ID].NowKey].Proxy)
 			if newErr != nil {
 				_, err := bot.Send(m.Sender, "创建失败!")
 				if err != nil {
@@ -170,7 +171,8 @@ func (p *TgBot) listEc2(bot *tb.Bot, c *tb.Callback) {
 			}
 			aws0, newErr := aws.New(p.State[c.Sender.ID].Data["region"],
 				p.Config.UserInfo[c.Sender.ID].AwsSecret[p.Config.UserInfo[c.Sender.ID].NowKey].Id,
-				p.Config.UserInfo[c.Sender.ID].AwsSecret[p.Config.UserInfo[c.Sender.ID].NowKey].Secret)
+				p.Config.UserInfo[c.Sender.ID].AwsSecret[p.Config.UserInfo[c.Sender.ID].NowKey].Secret,
+				p.Config.UserInfo[c.Sender.ID].AwsSecret[p.Config.UserInfo[c.Sender.ID].NowKey].Proxy)
 			if newErr != nil {
 				log.Println(newErr)
 			}

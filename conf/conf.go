@@ -18,6 +18,7 @@ type UserData struct {
 type AwsSecret struct {
 	Id     string `yaml:"id"`
 	Secret string `yaml:"secret"`
+	Proxy  string `yaml:"Proxy"`
 }
 
 type Conf struct {

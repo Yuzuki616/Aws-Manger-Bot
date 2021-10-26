@@ -24,7 +24,8 @@ func (p *TgBot) AgaManger(bot *tb.Bot) {
 			c.Sender.LastName, " ID: ", c.Sender.ID, " Action: List aga")
 		awsRt, awsErr := aws.New("us-west-2",
 			p.Config.UserInfo[c.Sender.ID].AwsSecret[p.Config.UserInfo[c.Sender.ID].NowKey].Id,
-			p.Config.UserInfo[c.Sender.ID].AwsSecret[p.Config.UserInfo[c.Sender.ID].NowKey].Secret)
+			p.Config.UserInfo[c.Sender.ID].AwsSecret[p.Config.UserInfo[c.Sender.ID].NowKey].Secret,
+			p.Config.UserInfo[c.Sender.ID].AwsSecret[p.Config.UserInfo[c.Sender.ID].NowKey].Proxy)
 		if awsErr != nil {
 			_, sendErr := bot.Send(c.Sender, "列出失败")
 			if sendErr != nil {

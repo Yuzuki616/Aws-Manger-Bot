@@ -48,7 +48,8 @@ func (p *TgBot) regionHandle(bot *tb.Bot, c *tb.Callback) {
 		defer delete(p.State, c.Sender.ID)
 		newRt, newErr := aws.New(p.State[c.Sender.ID].Data["region"],
 			p.Config.UserInfo[c.Sender.ID].AwsSecret[p.Config.UserInfo[c.Sender.ID].NowKey].Id,
-			p.Config.UserInfo[c.Sender.ID].AwsSecret[p.Config.UserInfo[c.Sender.ID].NowKey].Secret)
+			p.Config.UserInfo[c.Sender.ID].AwsSecret[p.Config.UserInfo[c.Sender.ID].NowKey].Secret,
+			p.Config.UserInfo[c.Sender.ID].AwsSecret[p.Config.UserInfo[c.Sender.ID].NowKey].Proxy)
 		if newErr != nil {
 			log.Error(newErr)
 		}
