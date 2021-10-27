@@ -12,7 +12,9 @@
 - [x] AGA创建与管理
 - [x] EC2wl创建与管理
 - [x] 配额相关操作
-
+- [x] 分密钥代理
+# 使用
+从Releases里下载可执行文件，第一次运行会生成配置文件，把bot token填进配置文件后重新启动即可
 # Thanks
 - [tucnak/telebot](https://github.com/tucnak/telebot)
 - [aws/aws-sdk-go](https://github.com/aws/aws-sdk-go)
