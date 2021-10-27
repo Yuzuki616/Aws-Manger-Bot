@@ -11,8 +11,9 @@ func (p *TgBot) KeyManger(bot *tb.Bot) {
 	listKey := key.Data("查看密钥", "listKey")
 	delKey := key.Data("删除密钥", "delKey")
 	swKey := key.Data("切换密钥", "swKey")
-	setProxy := key.Data("为密钥添加代理", "setProxy")
-	key.Inline(key.Row(addKey, delKey), key.Row(listKey, swKey), key.Row(setProxy))
+	addProxy := key.Data("添加代理", "addProxy")
+	delProxy := key.Data("删除代理", "delProxy")
+	key.Inline(key.Row(addKey, delKey), key.Row(listKey, swKey), key.Row(addProxy, delProxy))
 	bot.Handle("/KeyManger", func(m *tb.Message) {
 		if m.Private() {
 			_, err := bot.Send(m.Sender, "请选择你要进行的操作", key)
@@ -72,14 +73,22 @@ func (p *TgBot) KeyManger(bot *tb.Bot) {
 		}
 		p.State[c.Sender.ID] = &State{Parent: 4}
 	})
-	bot.Handle(&setProxy, func(c *tb.Callback) {
+	bot.Handle(&addProxy, func(c *tb.Callback) {
 		log.Info("User: ", c.Sender.FirstName, " ",
-			c.Sender.LastName, " ID: ", c.Sender.ID, " Action:  Set proxy for key")
+			c.Sender.LastName, " ID: ", c.Sender.ID, " Action:  Add proxy for key")
 		_, err := bot.Edit(c.Message, "请输入要添加代理的密钥备注: ")
 		if err != nil {
 			log.Error("Edit message error: ", err)
 		}
 		p.State[c.Sender.ID] = &State{Parent: 20, Data: map[string]string{}}
 	})
-
+	bot.Handle(&delKey, func(c *tb.Callback) {
+		log.Info("User: ", c.Sender.FirstName, " ",
+			c.Sender.LastName, " ID: ", c.Sender.ID, " Action:  Del proxy for key")
+		_, err := bot.Edit(c.Message, "请输入要删除代理的密钥备注: ")
+		if err != nil {
+			log.Error("Edit message error: ", err)
+		}
+		p.State[c.Sender.ID] = &State{Parent: 22, Data: map[string]string{}}
+	})
 }

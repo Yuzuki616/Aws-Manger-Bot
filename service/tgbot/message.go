@@ -440,6 +440,23 @@ func (p *TgBot) GlobalMess(bot *tb.Bot) {
 				if sendErr != nil {
 					log.Error("Send message error: ", sendErr)
 				}
+			case 22:
+				defer delete(p.State, m.Sender.ID)
+				p.Config.UserInfo[m.Sender.ID].AwsSecret[m.Text].Proxy = ""
+				conf.Lock.Lock()
+				saveErr := p.Config.SaveConfig()
+				conf.Lock.Unlock()
+				if saveErr != nil {
+					_, sendErr := bot.Send(m.Sender, "删除失败")
+					if sendErr != nil {
+						log.Error("Send message error: ", sendErr)
+					}
+					return
+				}
+				_, sendErr := bot.Send(m.Sender, "删除成功")
+				if sendErr != nil {
+					log.Error("Send message error: ", sendErr)
+				}
 			default: //直接跳出
 				return
 			}
