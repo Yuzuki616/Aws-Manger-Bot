@@ -1,4 +1,4 @@
-module github.com/338317/Aws-Manger-Bot
+module github.com/Yuzuki999/Aws-Manger-Bot
 
 go 1.17
 

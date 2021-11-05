@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/338317/Aws-Manger-Bot/conf"
-	"github.com/338317/Aws-Manger-Bot/service/tgbot"
+	"github.com/Yuzuki999/Aws-Manger-Bot/conf"
+	"github.com/Yuzuki999/Aws-Manger-Bot/service/tgbot"
 	log "github.com/sirupsen/logrus"
 	easy "github.com/t-tomalak/logrus-easy-formatter"
 	"os"

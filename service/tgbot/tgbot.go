@@ -1,7 +1,7 @@
 package tgbot
 
 import (
-	"github.com/338317/Aws-Manger-Bot/conf"
+	"github.com/Yuzuki999/Aws-Manger-Bot/conf"
 	log "github.com/sirupsen/logrus"
 	tb "gopkg.in/tucnak/telebot.v2"
 	"os"

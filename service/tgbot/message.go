@@ -1,8 +1,8 @@
 package tgbot
 
 import (
-	"github.com/338317/Aws-Manger-Bot/aws"
-	"github.com/338317/Aws-Manger-Bot/conf"
+	"github.com/Yuzuki999/Aws-Manger-Bot/aws"
+	"github.com/Yuzuki999/Aws-Manger-Bot/conf"
 	log "github.com/sirupsen/logrus"
 	tb "gopkg.in/tucnak/telebot.v2"
 	"strconv"
@@ -390,7 +390,8 @@ func (p *TgBot) GlobalMess(bot *tb.Bot) {
 				if sendErr != nil {
 					log.Error("send message error: ", sendErr)
 				}
-			case 18: //删除Aga
+			case 18: //删除Aga				
+			    defer delete(p.State, m.Sender.ID)
 				awsRt, awsErr := aws.New(p.State[m.Sender.ID].Data["region"],
 					p.Config.UserInfo[m.Sender.ID].AwsSecret[p.Config.UserInfo[m.Sender.ID].NowKey].Id,
 					p.Config.UserInfo[m.Sender.ID].AwsSecret[p.Config.UserInfo[m.Sender.ID].NowKey].Secret,
