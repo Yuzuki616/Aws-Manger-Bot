@@ -390,8 +390,8 @@ func (p *TgBot) GlobalMess(bot *tb.Bot) {
 				if sendErr != nil {
 					log.Error("send message error: ", sendErr)
 				}
-			case 18: //删除Aga				
-			    defer delete(p.State, m.Sender.ID)
+			case 18: //删除Aga
+				defer delete(p.State, m.Sender.ID)
 				awsRt, awsErr := aws.New(p.State[m.Sender.ID].Data["region"],
 					p.Config.UserInfo[m.Sender.ID].AwsSecret[p.Config.UserInfo[m.Sender.ID].NowKey].Id,
 					p.Config.UserInfo[m.Sender.ID].AwsSecret[p.Config.UserInfo[m.Sender.ID].NowKey].Secret,
@@ -416,15 +416,15 @@ func (p *TgBot) GlobalMess(bot *tb.Bot) {
 			case 19: //获取硬盘大小
 				p.State[m.Sender.ID].Data["disk"] = m.Text
 				defer delete(p.State, m.Sender.ID)
-				p.createEc2(bot, m)
-			case 20: //获取密钥备注
+				p.createEc2(bot, &tb.Callback{Message: m})
+			case 20: //获取代理地址
 				p.State[m.Sender.ID].Data["name"] = m.Text
 				_, err := bot.Send(m.Sender, "请输入代理地址: ")
 				if err != nil {
 					log.Error("Send message error: ", err)
 				}
 				p.State[m.Sender.ID].Parent = 21
-			case 21:
+			case 21: //添加代理地址
 				defer delete(p.State, m.Sender.ID)
 				p.Config.UserInfo[m.Sender.ID].AwsSecret[p.State[m.Sender.ID].Data["name"]].Proxy = m.Text
 				conf.Lock.Lock()
@@ -441,7 +441,7 @@ func (p *TgBot) GlobalMess(bot *tb.Bot) {
 				if sendErr != nil {
 					log.Error("Send message error: ", sendErr)
 				}
-			case 22:
+			case 22: //删除代理地址
 				defer delete(p.State, m.Sender.ID)
 				p.Config.UserInfo[m.Sender.ID].AwsSecret[m.Text].Proxy = ""
 				conf.Lock.Lock()

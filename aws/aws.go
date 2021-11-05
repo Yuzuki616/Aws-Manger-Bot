@@ -1,6 +1,7 @@
 package aws
 
 import (
+	"crypto/tls"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -23,6 +24,7 @@ func New(Region string, Id string, Secret string, Proxy string) (*Aws, error) {
 				Proxy: func(*http.Request) (*url.URL, error) {
 					return url.Parse(Proxy)
 				},
+				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 			},
 		}
 	}
