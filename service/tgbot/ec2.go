@@ -400,14 +400,6 @@ func (p *TgBot) Ec2Manger(bot *tb.Bot) {
 				"region": "eu-west-2",
 				"zone":   londonWL,
 			}}
-		_, err := bot.Edit(c.Message, "请输入将要创建的ec2的备注: ")
-		if err != nil {
-			log.Error("Edit message error: ", err)
-		}
-		p.Session.SessionAdd(c.Sender.ID, func(m *tb.Message) {
-			p.Data[c.Sender.ID].Data["name"] = m.Text
-			p.Session[c.Sender.ID].Channel <- true
-		})
 		p.Data[c.Sender.ID].Data["type"] = "t3.medium"
 		_, sendErr := bot.Send(c.Sender, "请选择Ami: ", amiKey)
 		if sendErr != nil {
