@@ -2,6 +2,7 @@ package tgbot
 
 import (
 	"github.com/Yuzuki999/Aws-Manger-Bot/conf"
+	"github.com/Yuzuki999/Aws-Manger-Bot/session"
 	log "github.com/sirupsen/logrus"
 	tb "gopkg.in/tucnak/telebot.v2"
 	"os"
@@ -12,13 +13,14 @@ type TgBot struct {
 	Config    *conf.Conf
 	TypeKey   *tb.ReplyMarkup
 	AmiKey    *tb.ReplyMarkup
-	State     map[int]*State
+	Data      map[int]*Data
 	RegionKey *tb.ReplyMarkup
+	Session   session.Session
 }
 
-type State struct {
-	Data   map[string]string
-	Parent int
+type Data struct {
+	RegionChan chan int
+	Data       map[string]string
 }
 
 func New(Config *conf.Conf) *TgBot {
@@ -26,7 +28,8 @@ func New(Config *conf.Conf) *TgBot {
 }
 
 func (p *TgBot) Start() {
-	p.State = make(map[int]*State)
+	p.Data = map[int]*Data{}
+	p.Session = session.Session{}
 	bot, err := tb.NewBot(tb.Settings{
 		Token:  p.Config.BotToken,
 		Poller: &tb.LongPoller{Timeout: 10 * time.Second},
@@ -53,6 +56,11 @@ func (p *TgBot) Start() {
 	p.Ec2Manger(bot)
 	p.setRegionKey(bot)
 	p.AgaManger(bot)
-	p.GlobalMess(bot)
+	bot.Handle(tb.OnText, func(m *tb.Message) {
+		if p.Session.SessionCheck(m.Sender.ID) {
+			p.Session.SessionHandle(m.Sender.ID, m)
+			log.Info("here")
+		}
+	})
 	bot.Start()
 }
