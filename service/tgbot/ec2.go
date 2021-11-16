@@ -23,12 +23,12 @@ const (
 
 func (p *TgBot) createEc2(bot *tb.Bot, c *tb.Callback) {
 	if _, ok := p.Config.UserInfo[c.Sender.ID]; ok {
-		_, err := bot.Send(c.Sender, "正在创建EC2...")
+		_, err := bot.Edit(c.Message, "正在创建EC2...")
 		if err != nil {
 			log.Error("Edit message error: ", err)
 		}
 		if p.Config.UserInfo[c.Sender.ID].NowKey == "" {
-			_, err := bot.Send(c.Sender, "请先通过/KeyManger命令选择密钥")
+			_, err := bot.Edit(c.Message, "请先通过/KeyManger命令选择密钥")
 			if err != nil {
 				log.Error("Edit message error: ", err)
 			}
@@ -239,9 +239,9 @@ func (p *TgBot) Ec2Manger(bot *tb.Bot) {
 			p.createEc2(bot, c)
 			p.Session.SessionDel(c.Sender.ID)
 		case <-time.After(30 * time.Second):
-			_, sendErr := bot.Edit(c.Message, "操作超时")
-			if sendErr != nil {
-				log.Error("Edit message error: ", sendErr)
+			_, editErr := bot.Edit(c.Message, "操作超时")
+			if editErr != nil {
+				log.Error("Edit message error: ", editErr)
 			}
 			p.Session.SessionDel(c.Sender.ID)
 		}
@@ -314,7 +314,7 @@ func (p *TgBot) Ec2Manger(bot *tb.Bot) {
 	p.TypeKey = typeKey
 	t2 := typeKey.Data("t2.micro", "t2micro")
 	bot.Handle(&t2, func(c *tb.Callback) {
-		p.Data[c.Sender.ID].Data["ami"] = "t2.micro"
+		p.Data[c.Sender.ID].Data["type"] = "t2.micro"
 		_, err := bot.Edit(c.Message, "请选择操作系统", amiKey)
 		if err != nil {
 			log.Println("Edit message error: ", err)
@@ -365,12 +365,8 @@ func (p *TgBot) Ec2Manger(bot *tb.Bot) {
 		p.Data[c.Sender.ID].Data = map[string]string{
 			"region": "ap-northeast-1",
 			"zone":   tokyoWl,
+			"type":   "t3.medium",
 		}
-		_, err := bot.Edit(c.Message, "请输入备注:  ")
-		if err != nil {
-			log.Error("Edit message error: ", err)
-		}
-		p.Data[c.Sender.ID].Data["type"] = "t3.medium"
 		_, sendErr := bot.Send(c.Sender, "请选择Ami: ", amiKey)
 		if sendErr != nil {
 			log.Println("Send message error: ", sendErr)
@@ -382,12 +378,8 @@ func (p *TgBot) Ec2Manger(bot *tb.Bot) {
 			Data: map[string]string{
 				"region": "ap-northeast-2",
 				"zone":   seoulWl,
+				"type":   "t3.medium",
 			}}
-		_, err := bot.Edit(c.Message, "请选择类型: ", typeKey)
-		if err != nil {
-			log.Error("Edit message error: ", err)
-		}
-		p.Data[c.Sender.ID].Data["type"] = "t3.medium"
 		_, sendErr := bot.Send(c.Sender, "请选择Ami: ", amiKey)
 		if sendErr != nil {
 			log.Println("Send message error: ", sendErr)
@@ -399,8 +391,8 @@ func (p *TgBot) Ec2Manger(bot *tb.Bot) {
 			Data: map[string]string{
 				"region": "eu-west-2",
 				"zone":   londonWL,
+				"type":   "t3.medium",
 			}}
-		p.Data[c.Sender.ID].Data["type"] = "t3.medium"
 		_, sendErr := bot.Send(c.Sender, "请选择Ami: ", amiKey)
 		if sendErr != nil {
 			log.Println("Send message error: ", sendErr)
@@ -412,8 +404,8 @@ func (p *TgBot) Ec2Manger(bot *tb.Bot) {
 			Data: map[string]string{
 				"region": "us-west-2",
 				"zone":   oregonWl,
+				"type":   "t3.medium",
 			}}
-		p.Data[c.Sender.ID].Data["type"] = "t3.medium"
 		_, sendErr := bot.Send(c.Sender, "请选择Ami: ", amiKey)
 		if sendErr != nil {
 			log.Println("Send message error: ", sendErr)
@@ -426,38 +418,39 @@ func (p *TgBot) Ec2Manger(bot *tb.Bot) {
 		log.Info("User: ", c.Sender.FirstName, " ",
 			c.Sender.LastName, " ID: ", c.Sender.ID, " Action:  Create ec2")
 		p.Data[c.Sender.ID] = &Data{Data: map[string]string{}}
-		_, err := bot.Edit(c.Message, "请输入将要创建的ec2的备注: ")
-		if err != nil {
-			log.Println("Edit message error: ", err)
-		}
-		p.Session.SessionAdd(c.Sender.ID, func(m *tb.Message) {
-			p.Data[c.Sender.ID].Data["name"] = m.Text
-			p.Session[c.Sender.ID].Channel <- true
-		})
-		select {
-		case tmp := <-p.Session[c.Sender.ID].Channel:
-			if tmp != true {
-				return
-			}
-			p.Session.SessionDel(c.Sender.ID)
-		case <-time.After(30 * time.Second):
-			_, sendErr := bot.Edit(c.Message, "操作超时")
-			if sendErr != nil {
-				log.Error("Edit message error: ", sendErr)
-			}
-			p.Session.SessionDel(c.Sender.ID)
-		}
-		_, sendErr := bot.Send(c.Sender, "请选择地区: ", p.RegionKey)
-		if sendErr != nil {
-			log.Println("Send message error: ", sendErr)
+		_, editErr2 := bot.Edit(c.Message, "请选择地区: ", p.RegionKey)
+		if editErr2 != nil {
+			log.Println("Edit message error: ", editErr2)
 		}
 		p.Data[c.Sender.ID].RegionChan = make(chan int)
 		select {
 		case <-p.Data[c.Sender.ID].RegionChan:
-			_, editErr := bot.Edit(c.Message, "请选择EC2类型", p.TypeKey)
-			if editErr != nil {
-				log.Error("Edit message error: ", editErr)
+			_, err := bot.Edit(c.Message, "请输入将要创建的ec2的备注: ")
+			if err != nil {
+				log.Println("Edit message error: ", err)
 			}
+			p.Session.SessionAdd(c.Sender.ID, func(m *tb.Message) {
+				p.Data[c.Sender.ID].Data["name"] = m.Text
+				p.Session[c.Sender.ID].Channel <- true
+			})
+			select {
+			case tmp := <-p.Session[c.Sender.ID].Channel:
+				if tmp != true {
+					return
+				}
+				p.Session.SessionDel(c.Sender.ID)
+				_, editErr := bot.Edit(c.Message, "请选择EC2类型", p.TypeKey)
+				if editErr != nil {
+					log.Error("Edit message error: ", editErr)
+				}
+			case <-time.After(30 * time.Second):
+				_, sendErr := bot.Edit(c.Message, "操作超时")
+				if sendErr != nil {
+					log.Error("Edit message error: ", sendErr)
+				}
+				p.Session.SessionDel(c.Sender.ID)
+			}
+
 		case <-time.After(30 * time.Second):
 			_, editErr := bot.Edit(c.Message, "操作超时")
 			if editErr != nil {
@@ -469,6 +462,7 @@ func (p *TgBot) Ec2Manger(bot *tb.Bot) {
 	bot.Handle(&newEc2Wl, func(c *tb.Callback) {
 		log.Info("User: ", c.Sender.FirstName, " ",
 			c.Sender.LastName, " ID: ", c.Sender.ID, " Action:  Create ec2 wavelength")
+		p.Data[c.Sender.ID] = &Data{Data: map[string]string{}}
 		_, editErr := bot.Edit(c.Message, "请输入将要创建的ec2的备注: ")
 		if editErr != nil {
 			log.Error("Edit message error: ", editErr)
@@ -493,7 +487,7 @@ func (p *TgBot) Ec2Manger(bot *tb.Bot) {
 		p.Data[c.Sender.ID] = &Data{Data: map[string]string{}}
 		_, editErr2 := bot.Edit(c.Message, "请选择Wavelength地区: ", regionWl)
 		if editErr2 != nil {
-			log.Println("Edit message error: ", editErr2)
+			log.Error("Edit message error: ", editErr2)
 		}
 	})
 	listEc2 := key.Data("列出EC2", "listEc2")
@@ -503,7 +497,7 @@ func (p *TgBot) Ec2Manger(bot *tb.Bot) {
 		p.Data[c.Sender.ID] = &Data{Data: map[string]string{}}
 		_, err := bot.Edit(c.Message, "请选择AWS区域: ", p.RegionKey)
 		if err != nil {
-			log.Println("Edit message error: ", err)
+			log.Error("Edit message error: ", err)
 		}
 		p.Data[c.Sender.ID].RegionChan = make(chan int)
 		select {
@@ -593,7 +587,7 @@ func (p *TgBot) Ec2Manger(bot *tb.Bot) {
 		p.Data[c.Sender.ID].RegionChan = make(chan int)
 		select {
 		case <-p.Data[c.Sender.ID].RegionChan:
-			_, editErr := bot.Edit(c.Message, "请输入要实例ID: ")
+			_, editErr := bot.Edit(c.Message, "请输入要启动的实例ID: ")
 			if editErr != nil {
 				log.Error("Edit message error: ", editErr)
 			}

@@ -14,26 +14,26 @@ func (p *TgBot) AgaManger(bot *tb.Bot) {
 		log.Info("User: ", c.Sender.FirstName, " ",
 			c.Sender.LastName, " ID: ", c.Sender.ID, " Action: Create aga")
 		p.Data[c.Sender.ID] = &Data{Data: map[string]string{}}
-		_, editErr := bot.Edit(c.Message, "请输入Aga的备注(不要重复): ")
+		_, editErr := bot.Edit(c.Message, "请选择地区: ", p.RegionKey)
 		if editErr != nil {
-			log.Error("Edit message error: ", editErr)
+			log.Println("Edit message error: ", editErr)
 		}
-		p.Session.SessionAdd(c.Sender.ID, func(m *tb.Message) {
-			p.Data[m.Sender.ID].Data["agaName"] = m.Text
-			p.Session[m.Sender.ID].Channel <- true
-		})
+		p.Data[c.Sender.ID].RegionChan = make(chan int)
 		select {
-		case tmp := <-p.Session[c.Sender.ID].Channel:
-			if tmp != true {
-				_, sendErr := bot.Send(c.Sender, "请选择地区: ", p.RegionKey)
-				if sendErr != nil {
-					log.Println("Send message error: ", sendErr)
-				}
-				return
+		case <-p.Data[c.Sender.ID].RegionChan:
+			_, editErr := bot.Edit(c.Message, "请输入Aga的备注(不要重复): ")
+			if editErr != nil {
+				log.Error("Edit message error: ", editErr)
 			}
-			p.Data[c.Sender.ID].RegionChan = make(chan int)
+			p.Session.SessionAdd(c.Sender.ID, func(m *tb.Message) {
+				p.Data[m.Sender.ID].Data["agaName"] = m.Text
+				p.Session[m.Sender.ID].Channel <- true
+			})
 			select {
-			case <-p.Data[c.Sender.ID].RegionChan:
+			case tmp := <-p.Session[c.Sender.ID].Channel:
+				if tmp != true {
+					return
+				}
 				_, err := bot.Edit(c.Message, "请输入要关联的Ec2实例ID: ")
 				if err != nil {
 					log.Error("Edit message error: ", err)
@@ -75,30 +75,30 @@ func (p *TgBot) AgaManger(bot *tb.Bot) {
 					}
 					p.Session[m.Sender.ID].Channel <- true
 				})
-			case <-time.After(30 * time.Second):
-				_, editErr := bot.Edit(c.Message, "操作超时")
-				if editErr != nil {
-					log.Error("Edit message error: ", editErr)
+				select {
+				case tmp := <-p.Session[c.Sender.ID].Channel:
+					if tmp != true {
+						return
+					}
+				case <-time.After(30 * time.Second):
+					_, sendErr := bot.Edit(c.Message, "操作超时")
+					if sendErr != nil {
+						log.Error("Edit message error: ", sendErr)
+					}
 				}
-			}
-			select {
-			case tmp := <-p.Session[c.Sender.ID].Channel:
-				if tmp != true {
-					return
-				}
+				p.Session.SessionDel(c.Sender.ID)
 			case <-time.After(30 * time.Second):
 				_, sendErr := bot.Edit(c.Message, "操作超时")
 				if sendErr != nil {
 					log.Error("Edit message error: ", sendErr)
 				}
+				p.Session.SessionDel(c.Sender.ID)
 			}
-			p.Session.SessionDel(c.Sender.ID)
 		case <-time.After(30 * time.Second):
-			_, sendErr := bot.Edit(c.Message, "操作超时")
-			if sendErr != nil {
-				log.Error("Edit message error: ", sendErr)
+			_, editErr := bot.Edit(c.Message, "操作超时")
+			if editErr != nil {
+				log.Error("Edit message error: ", editErr)
 			}
-			p.Session.SessionDel(c.Sender.ID)
 		}
 	})
 	listAga := key.Data("列出Aga", "list_aga")

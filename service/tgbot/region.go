@@ -15,6 +15,7 @@ func (p *TgBot) setRegionKey(bot *tb.Bot) {
 	virginia := regionKey.Data("弗吉尼亚", "us-east-1")
 	bot.Handle(&virginia, func(c *tb.Callback) {
 		p.Data[c.Sender.ID].Data["region"] = "us-east-1"
+		p.Data[c.Sender.ID].RegionChan <- 0
 	})
 	california := regionKey.Data("加利福尼亚", "us-west-1")
 	bot.Handle(&california, func(c *tb.Callback) {
