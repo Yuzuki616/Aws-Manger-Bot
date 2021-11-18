@@ -59,7 +59,6 @@ func (p *TgBot) Start() {
 	bot.Handle(tb.OnText, func(m *tb.Message) {
 		if p.Session.SessionCheck(m.Sender.ID) {
 			p.Session.SessionHandle(m.Sender.ID, m)
-			log.Info("here")
 		}
 	})
 	bot.Start()

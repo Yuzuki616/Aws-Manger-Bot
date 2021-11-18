@@ -52,10 +52,6 @@ func (p *TgBot) KeyManger(bot *tb.Bot) {
 			}
 			p.Session.SessionAdd(c.Sender.ID, func(m *tb.Message) {
 				p.Data[m.Sender.ID].Data["id"] = m.Text
-				_, sendErr := bot.Send(m.Sender, "请输入密钥: ")
-				if sendErr != nil {
-					log.Error("Send Message error: ", sendErr)
-				}
 				p.Session[m.Sender.ID].Channel <- true
 			})
 			select {
@@ -63,8 +59,13 @@ func (p *TgBot) KeyManger(bot *tb.Bot) {
 				if tmp != true {
 					return
 				}
+				_, sendErr := bot.Send(c.Sender, "请输入密钥: ")
+				if sendErr != nil {
+					log.Error("Send Message error: ", sendErr)
+				}
 				p.Session.SessionAdd(c.Sender.ID, func(m *tb.Message) {
 					defer delete(p.Data, c.Sender.ID)
+					log.Error("suf")
 					if _, ok := p.Config.UserInfo[c.Sender.ID]; !ok {
 						p.Config.UserInfo[c.Sender.ID] = &conf.UserData{
 							UserName:  c.Sender.Username,
@@ -101,6 +102,18 @@ func (p *TgBot) KeyManger(bot *tb.Bot) {
 					}
 					p.Session[m.Sender.ID].Channel <- true
 				})
+				select {
+				case tmp := <-p.Session[c.Sender.ID].Channel:
+					if tmp != true {
+						return
+					}
+					p.Session.SessionDel(c.Sender.ID)
+				case <-time.After(30 * time.Second):
+					_, sendErr := bot.Edit(c.Message, "操作超时")
+					if sendErr != nil {
+						log.Error("Edit message error: ", sendErr)
+					}
+				}
 			case <-time.After(30 * time.Second):
 				_, sendErr := bot.Edit(c.Message, "操作超时")
 				if sendErr != nil {
