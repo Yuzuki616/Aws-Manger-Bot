@@ -1,10 +1,11 @@
 package tgbot
 
 import (
+	"time"
+
 	"github.com/Yuzuki999/Aws-Manger-Bot/aws"
 	log "github.com/sirupsen/logrus"
 	tb "gopkg.in/tucnak/telebot.v2"
-	"time"
 )
 
 func (p *TgBot) AgaManger(bot *tb.Bot) {
@@ -34,7 +35,7 @@ func (p *TgBot) AgaManger(bot *tb.Bot) {
 				if tmp != true {
 					return
 				}
-				_, err := bot.Edit(c.Message, "请输入要关联的Ec2实例ID: ")
+				_, err := bot.Send(c.Sender, "请输入要关联的Ec2实例ID: ")
 				if err != nil {
 					log.Error("Edit message error: ", err)
 				}
@@ -191,9 +192,24 @@ func (p *TgBot) AgaManger(bot *tb.Bot) {
 	})
 	key.Inline(key.Row(createAga, listAga), key.Row(delAga))
 	bot.Handle("/AgaManger", func(m *tb.Message) {
-		_, err := bot.Send(m.Sender, "请选择要进行的操作", key)
-		if err != nil {
-			log.Error("Edit message error: ", err)
+		if m.Private() {
+			mess := p.CheckKey(m.Sender.ID)
+			if mess != "" {
+				_, err := bot.Send(m.Sender, mess)
+				if err != nil {
+					log.Println("Send message error: ", err)
+				}
+				return
+			}
+			_, err := bot.Send(m.Sender, "请选择你要进行的操作", key)
+			if err != nil {
+				log.Println("Send message error: ", err)
+			}
+		} else {
+			_, err := bot.Send(m.Sender, "请私聊Bot使用")
+			if err != nil {
+				log.Println("Send message error: ", err)
+			}
 		}
 	})
 }

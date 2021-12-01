@@ -1,9 +1,10 @@
 package aws
 
 import (
+	"time"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/lightsail"
-	"time"
 )
 
 type LsInfo struct {
@@ -14,7 +15,16 @@ type LsInfo struct {
 	Key    *string
 }
 
-func (p *Aws) CreateLs(Name string, Region string, BlueId string, BundleId string) (*LsInfo, error) {
+func (p *Aws) GetBlueId() (*lightsail.GetBlueprintsOutput, error) {
+	svc := lightsail.New(p.Sess)
+	blueID, blueErr := svc.GetBlueprints(&lightsail.GetBlueprintsInput{})
+	if blueErr != nil {
+		return nil, blueErr
+	}
+	return blueID, nil
+}
+
+func (p *Aws) CreateLs(Name string, Zone string, BlueId string, BundleId string) (*LsInfo, error) {
 	svc := lightsail.New(p.Sess)
 	dateName := Name + time.Unix(time.Now().Unix(), 0).Format("_2006-01-02_15:04:05")
 	key, keyErr := svc.CreateKeyPair(&lightsail.CreateKeyPairInput{KeyPairName: aws.String(dateName)})
@@ -22,7 +32,7 @@ func (p *Aws) CreateLs(Name string, Region string, BlueId string, BundleId strin
 		return nil, keyErr
 	}
 	lsRt, lsErr := svc.CreateInstances(&lightsail.CreateInstancesInput{
-		AvailabilityZone: aws.String(Region),
+		AvailabilityZone: aws.String(Zone),
 		BlueprintId:      aws.String(BlueId),
 		BundleId:         aws.String(BundleId),
 		InstanceNames:    []*string{aws.String(Name)},

@@ -1,12 +1,15 @@
 package tgbot
 
 import (
+	"os"
+	"time"
+
+	"github.com/Yuzuki999/Aws-Manger-Bot/aws"
+
 	"github.com/Yuzuki999/Aws-Manger-Bot/conf"
 	"github.com/Yuzuki999/Aws-Manger-Bot/session"
 	log "github.com/sirupsen/logrus"
 	tb "gopkg.in/tucnak/telebot.v2"
-	"os"
-	"time"
 )
 
 type TgBot struct {
@@ -56,10 +59,27 @@ func (p *TgBot) Start() {
 	p.Ec2Manger(bot)
 	p.setRegionKey(bot)
 	p.AgaManger(bot)
+	p.LightSailManger(bot)
 	bot.Handle(tb.OnText, func(m *tb.Message) {
 		if p.Session.SessionCheck(m.Sender.ID) {
 			p.Session.SessionHandle(m.Sender.ID, m)
 		}
+	})
+	bot.Handle("/getblue", func(m *tb.Message) {
+		awsO, newErr := aws.New("ap-northeast-1",
+			p.Config.UserInfo[m.Sender.ID].AwsSecret[p.Config.UserInfo[m.Sender.ID].NowKey].Id,
+			p.Config.UserInfo[m.Sender.ID].AwsSecret[p.Config.UserInfo[m.Sender.ID].NowKey].Secret,
+			p.Config.UserInfo[m.Sender.ID].AwsSecret[p.Config.UserInfo[m.Sender.ID].NowKey].Proxy)
+		if newErr != nil {
+			log.Error("New aws error: ", newErr)
+			return
+		}
+		bluePrint, err := awsO.GetBlueId()
+		if err != nil {
+			log.Error("Get blue print error: ", err)
+			return
+		}
+		log.Info(bluePrint.Blueprints)
 	})
 	bot.Start()
 }

@@ -1,12 +1,13 @@
 package tgbot
 
 import (
-	"github.com/Yuzuki999/Aws-Manger-Bot/aws"
-	log "github.com/sirupsen/logrus"
-	tb "gopkg.in/tucnak/telebot.v2"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/Yuzuki999/Aws-Manger-Bot/aws"
+	log "github.com/sirupsen/logrus"
+	tb "gopkg.in/tucnak/telebot.v2"
 )
 
 const (
@@ -206,9 +207,24 @@ func (p *TgBot) QuotaManger(bot *tb.Bot) {
 	})
 	key.Inline(key.Row(getQuota, updateQuota))
 	bot.Handle("/QuotaManger", func(m *tb.Message) {
-		_, err := bot.Send(m.Sender, "请选择要进行的操作: ", key)
-		if err != nil {
-			log.Println("Send message error: ", err)
+		if m.Private() {
+			mess := p.CheckKey(m.Sender.ID)
+			if mess != "" {
+				_, err := bot.Send(m.Sender, mess)
+				if err != nil {
+					log.Println("Send message error: ", err)
+				}
+				return
+			}
+			_, err := bot.Send(m.Sender, "请选择你要进行的操作", key)
+			if err != nil {
+				log.Println("Send message error: ", err)
+			}
+		} else {
+			_, err := bot.Send(m.Sender, "请私聊Bot使用")
+			if err != nil {
+				log.Println("Send message error: ", err)
+			}
 		}
 	})
 }

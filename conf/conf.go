@@ -1,12 +1,13 @@
 package conf
 
 import (
-	log "github.com/sirupsen/logrus"
-	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
 	"sync"
 	"time"
+
+	log "github.com/sirupsen/logrus"
+	"gopkg.in/yaml.v2"
 )
 
 type UserData struct {
@@ -44,7 +45,7 @@ func (c *Conf) LoadConfig() error {
 			c.BotToken = "Tg Bot Token"
 			writeErr := c.SaveConfig()
 			if writeErr != nil {
-				log.Error("Write file error: ", writeErr)
+				log.Error("Write file error: ", "writeErr")
 				os.Exit(1)
 			}
 			log.Error("已将默认配置文件写出，请填写bot token后重新启动")

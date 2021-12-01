@@ -1,11 +1,23 @@
 package tgbot
 
 import (
+	"time"
+
 	"github.com/Yuzuki999/Aws-Manger-Bot/conf"
 	log "github.com/sirupsen/logrus"
 	tb "gopkg.in/tucnak/telebot.v2"
-	"time"
 )
+
+func (p *TgBot) CheckKey(id int) string {
+	if _, ok := p.Config.UserInfo[id]; ok {
+		if p.Config.UserInfo[id].NowKey == "" {
+			return "请先通过 /KeyManger 命令选择密钥"
+		}
+	} else {
+		return "请先通过 /KeyManger 命令添加密钥"
+	}
+	return ""
+}
 
 func (p *TgBot) KeyManger(bot *tb.Bot) {
 	key := &tb.ReplyMarkup{}
@@ -65,7 +77,6 @@ func (p *TgBot) KeyManger(bot *tb.Bot) {
 				}
 				p.Session.SessionAdd(c.Sender.ID, func(m *tb.Message) {
 					defer delete(p.Data, c.Sender.ID)
-					log.Error("suf")
 					if _, ok := p.Config.UserInfo[c.Sender.ID]; !ok {
 						p.Config.UserInfo[c.Sender.ID] = &conf.UserData{
 							UserName:  c.Sender.Username,
