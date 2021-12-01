@@ -18,3 +18,7 @@
 # Thanks
 - [tucnak/telebot](https://github.com/tucnak/telebot)
 - [aws/aws-sdk-go](https://github.com/aws/aws-sdk-go)
+
+感谢 [JetBrains](https://jb.gg/) 提供的 [Goland](https://www.jetbrains.com/go) 授权
+
+<img src=https://resources.jetbrains.com/storage/products/company/brand/logos/GoLand_icon.png width="200">
