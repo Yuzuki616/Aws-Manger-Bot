@@ -70,9 +70,9 @@ func (p *TgBot) createLightsail(bot *telebot.Bot, c *telebot.Callback) {
 		p.Config.UserInfo[c.Sender.ID].AwsSecret[p.Config.UserInfo[c.Sender.ID].NowKey].Proxy)
 	if newErr != nil {
 		log.Error("Init aws sdk error: ", newErr)
-		_, err := bot.Send(c.Sender, "创建失败!")
+		_, err := bot.Edit(c.Message, "创建失败!")
 		if err != nil {
-			log.Error("Send message error: ", err)
+			log.Error("Edit message error: ", err)
 		}
 		return
 	}
@@ -80,9 +80,9 @@ func (p *TgBot) createLightsail(bot *telebot.Bot, c *telebot.Callback) {
 		p.Data[c.Sender.ID].Data["type"]+zone[p.Data[c.Sender.ID].Data["zone"]])
 	if lsErr != nil {
 		log.Error("Create lightsail error: ", lsErr)
-		_, err := bot.Send(c.Sender, "创建失败!")
+		_, err := bot.Edit(c.Message, "创建失败!")
 		if err != nil {
-			log.Error("Send message error: ", err)
+			log.Error("Edit message error: ", err)
 		}
 		return
 	}
@@ -90,12 +90,12 @@ func (p *TgBot) createLightsail(bot *telebot.Bot, c *telebot.Callback) {
 	if infoErr != nil {
 		log.Error("Get lightsail info error: ", infoErr)
 	}
-	_, sendErr := bot.Send(c.Sender, "创建成功!\n备注: "+
+	_, sendErr := bot.Edit(c.Message, "创建成功!\n备注: "+
 		*lsInfo.Name+"\n状态: "+
-		*lsInfo.Status+"IP\n"+
-		*lsInfo.Ip)
+		*lsInfo.Status+"\nIP: "+
+		*lsInfo.Ip+"\nSSH密钥: \n"+*lsRt.Key)
 	if sendErr != nil {
-		log.Error("Send message error: ", sendErr)
+		log.Error("Edit message error: ", sendErr)
 	}
 }
 
