@@ -5,10 +5,11 @@
 
 部分功能未经过测试，可能无法使用  
 写的很烂，只有能用的程度
+目前正在开发[AWS Web面板](https://github.com/yuzuki999/AWS-Panel)，有兴趣的可以看一下
 # 已实现的功能
 - [x] 分用户多密钥管理
 - [x] EC2创建及管理
-- [ ] Lightsail创建及管理
+- [x] Lightsail创建及管理
 - [x] AGA创建与管理
 - [x] EC2wl创建与管理
 - [x] 配额相关操作
