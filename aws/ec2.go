@@ -1,9 +1,10 @@
 package aws
 
 import (
+	"time"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ec2"
-	"time"
 )
 
 type Ec2Info struct {
@@ -46,15 +47,19 @@ func (p *Aws) CreateEc2(Ami string, Ec2Type string, Name string, DiskSize int64)
 	if authSecInErr != nil {
 		return nil, authSecInErr
 	}
+	ebs, ebsErr := p.GetAmiEbsMap(Ami)
+	if ebsErr != nil {
+		return nil, ebsErr
+	}
+	ebs[0].Ebs.VolumeSize = &DiskSize
 	runRt, runErr := svc.RunInstances(&ec2.RunInstancesInput{
-		ImageId:      aws.String(Ami),
-		InstanceType: aws.String(Ec2Type),
-		MinCount:     aws.Int64(1),
-		MaxCount:     aws.Int64(1),
-		KeyName:      &dateName,
-		BlockDeviceMappings: []*ec2.BlockDeviceMapping{{DeviceName: aws.String("/dev/sda1"),
-			Ebs: &ec2.EbsBlockDevice{VolumeSize: aws.Int64(DiskSize)}}},
-		SecurityGroupIds: []*string{secRt.GroupId},
+		ImageId:             aws.String(Ami),
+		InstanceType:        aws.String(Ec2Type),
+		MinCount:            aws.Int64(1),
+		MaxCount:            aws.Int64(1),
+		KeyName:             &dateName,
+		BlockDeviceMappings: ebs,
+		SecurityGroupIds:    []*string{secRt.GroupId},
 	}) //创建ec2实例
 	if runErr != nil {
 		return nil, runErr
@@ -205,6 +210,21 @@ func (p *Aws) GetAmiId(AmiName string) (string, error) {
 		return "", err
 	}
 	return *ami.Images[0].ImageId, nil
+}
+
+func (p *Aws) GetAmiEbsMap(AmiId string) ([]*ec2.BlockDeviceMapping, error) {
+	svc := ec2.New(p.Sess)
+	ami, err := svc.DescribeImages(&ec2.DescribeImagesInput{
+		Filters: []*ec2.Filter{
+			{
+				Name:   aws.String("image-id"),
+				Values: []*string{aws.String(AmiId)},
+			},
+		}})
+	if err != nil {
+		return nil, err
+	}
+	return ami.Images[0].BlockDeviceMappings, nil
 }
 
 func (p *Aws) GetWindowsPassword(InstanceId string) (*ec2.GetPasswordDataOutput, error) {
